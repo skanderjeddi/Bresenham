@@ -21,4 +21,7 @@ public class Vertex {
 	public Vertex copy() {
 		return new Vertex(this.x, this.y, this.z, this.w);
 	}
+	public void print() {
+		System.out.printf("(%f, %f, %f)\n", this.x, this.y, this.z);
+	}
 }

@@ -11,6 +11,14 @@ import com.skanderj.bresenham.math.Triangle;
 import com.skanderj.bresenham.math.Vertex;
 
 public class Mesh {
+	/**
+	 * Load a mesh from a waveform .obj file
+	 *
+	 * @param objName
+	 * @return a constructed mesh from the data
+	 * @throws NumberFormatException
+	 * @throws IOException
+	 */
 	public static final Mesh loadFromFile(String objName) throws NumberFormatException, IOException {
 		Vector<Vertex> vectors = new Vector<Vertex>();
 		Vector<Triangle> triangles = new Vector<Triangle>();

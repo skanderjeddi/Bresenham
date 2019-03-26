@@ -41,7 +41,7 @@ public class Window {
 		this.frame.setVisible(true);
 	}
 
-	public void hide(boolean dispose) {
+	public void hide() {
 		this.frame.setVisible(false);
 	}
 

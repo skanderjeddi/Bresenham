@@ -6,6 +6,12 @@ public final class Matrix {
 	private final int rows, lines;
 	public final double[][] data;
 
+	/**
+	 * Generates the n-by-n identity matrix
+	 *
+	 * @param size
+	 * @return [I(n)]
+	 */
 	public static final Matrix identity(int size) {
 		Matrix idmat = new Matrix(size, size);
 		for (int cursor = 0; cursor < size; cursor += 1) {
@@ -14,6 +20,14 @@ public final class Matrix {
 		return idmat;
 	}
 
+	/**
+	 * Generates a random matrix
+	 *
+	 * @param rows
+	 * @param lines
+	 * @param magnitude
+	 * @return a random matrix filled with positives floating point numbers
+	 */
 	public static final Matrix random(int rows, int lines, int magnitude) {
 		Random random = new Random();
 		Matrix randommat = new Matrix(rows, lines);
@@ -45,16 +59,28 @@ public final class Matrix {
 		this(copyMatrix.data);
 	}
 
-	public final Matrix scalar(double scalar) {
+	/**
+	 * Multiplies the matrix values by the scalar value
+	 *
+	 * @param scalar
+	 * @return k * [M]
+	 */
+	public final Matrix multiply(double k) {
 		Matrix resmat = new Matrix(this);
 		for (int row = 0; row < this.rows; row += 1) {
 			for (int line = 0; line < this.lines; line += 1) {
-				resmat.data[row][line] *= scalar;
+				resmat.data[row][line] *= k;
 			}
 		}
 		return resmat;
 	}
 
+	/**
+	 * Sums current matrix with argument matrix
+	 *
+	 * @param mat
+	 * @return [A] + [B]
+	 */
 	public final Matrix add(Matrix mat) {
 		Matrix resmat = new Matrix(this);
 		for (int row = 0; row < this.rows; row += 1) {
@@ -65,11 +91,23 @@ public final class Matrix {
 		return resmat;
 	}
 
+	/**
+	 * Subtracts argument matrix from current matrix
+	 *
+	 * @param mat
+	 * @return [A] - [B]
+	 */
 	public final Matrix subtract(Matrix mat) {
-		mat.scalar(-1);
+		mat.multiply(-1);
 		return this.add(mat);
 	}
 
+	/**
+	 * Mutliplies compatible matrices together
+	 *
+	 * @param mat
+	 * @return [A] * [B]
+	 */
 	public final Matrix multiply(Matrix mat) {
 		Matrix resmat;
 		if (this.lines == mat.rows) {
@@ -96,6 +134,11 @@ public final class Matrix {
 		return resmat;
 	}
 
+	/**
+	 * Generates the transpose of the current matrix
+	 *
+	 * @return t[A]
+	 */
 	public final Matrix transpose() {
 		Matrix resmat = new Matrix(this.lines, this.rows);
 		for (int row = 0; row < this.rows; row += 1) {

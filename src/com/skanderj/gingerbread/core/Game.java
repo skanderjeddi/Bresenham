@@ -48,8 +48,16 @@ public abstract class Game extends Process {
 		}
 	}
 
+	/**
+	 * Updates game logic
+	 *
+	 * @param delta the delaya between the current update and last update
+	 */
 	public abstract void update(double delta);
 
+	/**
+	 * Renders the game
+	 */
 	public abstract void render();
 
 }

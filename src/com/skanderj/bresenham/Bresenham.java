@@ -26,7 +26,7 @@ public class Bresenham extends Game {
 	public static final double WIDTH = 250, HEIGHT = 200;
 	public static final double WIDTH_SCALING_FACTOR = 0.5 * Bresenham.EFFECTIVE_WIDTH, HEIGHT_SCALING_FACTOR = 0.5 * Bresenham.EFFECTIVE_HEIGHT;
 
-	public static final int OG = 0, SCALE = 4, BUFFERS = 3, EFFECTIVE_WIDTH = (int) (Bresenham.WIDTH * Bresenham.SCALE), EFFECTIVE_HEIGHT = (int) (Bresenham.HEIGHT * Bresenham.SCALE);
+	public static final int OG = 0, SCALE = 4, BUFFERS = 2, EFFECTIVE_WIDTH = (int) (Bresenham.WIDTH * Bresenham.SCALE), EFFECTIVE_HEIGHT = (int) (Bresenham.HEIGHT * Bresenham.SCALE);
 	public static final double FOV_DEGREES = 90, ASPECT_RATIO = Bresenham.HEIGHT / Bresenham.WIDTH, NEAR_FIELD = 0.1, FAR_FIELD = 1000.0;
 
 	private Window window;
@@ -47,7 +47,7 @@ public class Bresenham extends Game {
 		this.window = new Window(this, Bresenham.IDENTIFIER, Bresenham.EFFECTIVE_WIDTH, Bresenham.EFFECTIVE_HEIGHT);
 		this.keyboard = new Keyboard();
 		this.mouse = new Mouse();
-		this.meshFile = "teapot.obj";
+		this.meshFile = "cube.obj";
 	}
 
 	@Override
@@ -63,7 +63,7 @@ public class Bresenham extends Game {
 			// Normalize light vertex
 			this.lightDirection = this.normalize(this.lightDirection);
 			// Up vertex
-			this.upAxis = new Vertex(0.0, -1.0, 0.0, 1.0);
+			this.upAxis = new Vertex(0.0, 1.0, 0.0, 1.0);
 			// Gaze
 			this.gaze = new Vertex(0.0, 0.0, 1.0);
 			// Target
@@ -105,7 +105,7 @@ public class Bresenham extends Game {
 
 	@Override
 	protected void destroy() {
-		this.window.hide(true);
+		this.window.hide();
 		System.exit(Process.EXIT_SUCCESS);
 	}
 
@@ -146,11 +146,11 @@ public class Bresenham extends Game {
 			{
 				// Turn left
 				if (qKeyHeld) {
-					this.yaw -= 0.5 * delta;
+					this.yaw -= 0.05 * delta;
 				}
 				// Turn right
 				if (dKeyHeld) {
-					this.yaw += 0.5 * delta;
+					this.yaw += 0.05 * delta;
 				}
 				// Go forward
 				if (zKeyHeld) {
@@ -163,7 +163,7 @@ public class Bresenham extends Game {
 			}
 		}
 		// Update rotation angle (optional)
-		this.rotationAngle += 0.05 * delta;
+		// this.rotationAngle += 0.05 * delta;
 		// Update rotation matrices
 		{
 			// Update z rotation matrix
@@ -202,7 +202,7 @@ public class Bresenham extends Game {
 		Graphics graphics = bufferStrategy.getDrawGraphics();
 		{
 			// Set worse rendering hints (possibly optional?)
-			this.lowerRenderQuality(graphics);
+			this.decreaseRenderQuality(graphics);
 			// Clear the screen
 			graphics.setColor(Color.BLACK);
 			graphics.fillRect(Bresenham.OG, Bresenham.OG, Bresenham.EFFECTIVE_WIDTH, Bresenham.EFFECTIVE_HEIGHT);
@@ -216,7 +216,8 @@ public class Bresenham extends Game {
 					// Transform localTriangle
 					localTriangle = this.applyMatrixToTriangle_NW(localTriangle, this.worldMatrix);
 					// Calculate normal data
-					Vertex normalVertex = this.normalT(localTriangle);
+					Vertex normalVertex = this.normalToTriangle(localTriangle);
+					normalVertex = this.normalize(normalVertex);
 					// Calculate camera ray
 					Vertex cameraRay = this.subtract(localTriangle.vectors[0], this.cameraLocation);
 					// Calculate dot product to evaluate if triangle is in view
@@ -230,13 +231,15 @@ public class Bresenham extends Game {
 						// Multiply by protection matrix 3D -> 2D
 						localTriangle = this.applyMatrixToTriangle_NW(localTriangle, this.projectionMatrix);
 						// Normalize
-						localTriangle = this.normalizeT(localTriangle);
+						localTriangle = this.normalizeTriangle(localTriangle);
 						// Scale into view
 						Vertex viewOffset = new Vertex(1.0, 1.0, 0.0);
-						localTriangle = this.addT(localTriangle, viewOffset);
-						localTriangle = this.scaleToView(localTriangle);
+						localTriangle = this.addVertexToTriangle(localTriangle, viewOffset);
+						localTriangle = this.scaleTriangleToView(localTriangle);
 						// Add to vector
 						queueVector.add(localTriangle);
+						// Draw line
+						graphics.setColor(Color.RED);
 					}
 				}
 			}
@@ -253,12 +256,15 @@ public class Bresenham extends Game {
 					 * orderedTriangle.vectors[1].y, // \n orderedTriangle.vectors[2].x,
 					 * orderedTriangle.vectors[2].y, // \n orderedTriangle.color);
 					 **/
-					// Graphics fill() implementation - massive slow down compared to wireframe
+					// Graphics fill() implementation - slow down compared to wireframe
 					// rendering but to be expected
-					this.fillTriangle_GRAPHICS_IMPL(graphics, orderedTriangle);
+					// this.fillTriangle_GRAPHICS_IMPL(graphics, orderedTriangle);
+					Vertex normalVertex = this.normalToTriangle(orderedTriangle);
+					normalVertex = this.scaleVertexToView(normalVertex);
+					graphics.setColor(Color.RED);
+					graphics.drawLine((int) normalVertex.x, (int) normalVertex.y, (int) orderedTriangle.vectors[0].x, (int) orderedTriangle.vectors[0].y);
 					// Graphics draw() implements - fastest draw method
-					// this.drawTriangle_GRAPHICS_IMPL(graphics, orderedTriangle,
-					// orderedTriangle.color);
+					this.drawTriangle_GRAPHICS_IMPL(graphics, orderedTriangle);
 				}
 			}
 		}
@@ -462,7 +468,7 @@ public class Bresenham extends Game {
 	 * Returns a new triangle - sum of the initial triangle's vertices coordinates &
 	 * the initial vertex - this implementation is messy and could be refactored
 	 */
-	public Triangle addT(Triangle triangle, Vertex vertex) {
+	public Triangle addVertexToTriangle(Triangle triangle, Vertex vertex) {
 		Triangle transformedTriangle = new Triangle(triangle);
 		for (int index = 0; index < 3; index += 1) {
 			transformedTriangle.vectors[index] = this.add(transformedTriangle.vectors[index], vertex);
@@ -475,7 +481,7 @@ public class Bresenham extends Game {
 	 * coordinates & the initial vertex - this implementation is messy and could be
 	 * refactored
 	 */
-	public Triangle subtractT(Triangle triangle, Vertex vertex) {
+	public Triangle subtractVertexFromTriangle(Triangle triangle, Vertex vertex) {
 		Triangle transformedTriangle = new Triangle(triangle);
 		for (int index = 0; index < 3; index += 1) {
 			transformedTriangle.vectors[index] = this.subtract(transformedTriangle.vectors[index], vertex);
@@ -486,7 +492,7 @@ public class Bresenham extends Game {
 	/**
 	 * Returns a new triangle - normalizes all the vectors of the initial triangle
 	 */
-	public Triangle normalizeT(Triangle triangle) {
+	public Triangle normalizeTriangle(Triangle triangle) {
 		Triangle transformedTriangle = new Triangle(triangle);
 		for (int index = 0; index < 3; index += 1) {
 			transformedTriangle.vectors[index] = this.divide(transformedTriangle.vectors[index], transformedTriangle.vectors[index].w);
@@ -497,16 +503,26 @@ public class Bresenham extends Game {
 	/**
 	 * Returns the normal vertex to a triangle
 	 */
-	public Vertex normalT(Triangle triangle) {
+	public Vertex normalToTriangle(Triangle triangle) {
 		Vertex firstAxis = this.subtract(triangle.vectors[1], triangle.vectors[0]);
 		Vertex secondAxis = this.subtract(triangle.vectors[2], triangle.vectors[0]);
-		return this.normalize(this.crossProduct(firstAxis, secondAxis));
+		return this.crossProduct(firstAxis, secondAxis);
+	}
+
+	/**
+	 * Scales a vertex to viewing distance
+	 */
+	public Vertex scaleVertexToView(Vertex vertex) {
+		vertex.print();
+		Vertex scaledVertex = new Vertex(vertex.x * Bresenham.WIDTH_SCALING_FACTOR, vertex.y * Bresenham.HEIGHT_SCALING_FACTOR, vertex.z);
+		scaledVertex.print();
+		return scaledVertex;
 	}
 
 	/**
 	 * Scales a triangle to viewing distance
 	 */
-	public Triangle scaleToView(Triangle triangle) {
+	public Triangle scaleTriangleToView(Triangle triangle) {
 		Triangle transformedTriangle = new Triangle(triangle);
 		for (int index = 0; index < 3; index += 1) {
 			transformedTriangle.vectors[index].x *= Bresenham.WIDTH_SCALING_FACTOR;
@@ -559,49 +575,8 @@ public class Bresenham extends Game {
 		xRotationMatrix.data[1][2] = Math.sin(angle);
 		xRotationMatrix.data[2][1] = -Math.sin(angle);
 		xRotationMatrix.data[2][2] = Math.cos(angle);
-		xRotationMatrix.data[3][3] = 1;
+		xRotationMatrix.data[3][3] = 1.0;
 		return xRotationMatrix;
-	}
-
-	/**
-	 * Updates the x-rotation matrix to match the value of the new angle - must be
-	 * called every cycle
-	 */
-	public void updateXRotationMatrix(Matrix xMatrix, double angle) {
-		xMatrix.data[0][0] = 1.0;
-		xMatrix.data[1][1] = Math.cos(angle);
-		xMatrix.data[1][2] = Math.sin(angle);
-		xMatrix.data[2][1] = -Math.sin(angle);
-		xMatrix.data[2][2] = Math.cos(angle);
-		xMatrix.data[3][3] = 1;
-	}
-
-	/**
-	 * Returns a 4-by-4 rotation matrix around the z axis by the angle value -
-	 * usually 0 when created
-	 */
-	public Matrix createZRotationMatrix(double angle) {
-		Matrix zRotationMatrix = new Matrix(4, 4);
-		zRotationMatrix.data[0][0] = Math.cos(angle);
-		zRotationMatrix.data[0][1] = Math.sin(angle);
-		zRotationMatrix.data[1][0] = -Math.sin(angle);
-		zRotationMatrix.data[1][1] = Math.cos(angle);
-		zRotationMatrix.data[2][2] = 1.0;
-		zRotationMatrix.data[3][3] = 1.0;
-		return zRotationMatrix;
-	}
-
-	/**
-	 * Updates the z-rotation matrix to match the value of the new angle - must be
-	 * called every cycle
-	 */
-	public void updateZRotationMatrix(Matrix zMatrix, double angle) {
-		zMatrix.data[0][0] = Math.cos(angle);
-		zMatrix.data[0][1] = Math.sin(angle);
-		zMatrix.data[1][0] = -Math.sin(angle);
-		zMatrix.data[1][1] = Math.cos(angle);
-		zMatrix.data[2][2] = 1.0;
-		zMatrix.data[3][3] = 1.0;
 	}
 
 	/**
@@ -620,6 +595,34 @@ public class Bresenham extends Game {
 	}
 
 	/**
+	 * Returns a 4-by-4 rotation matrix around the z axis by the angle value -
+	 * usually 0 when created
+	 */
+	public Matrix createZRotationMatrix(double angle) {
+		Matrix zRotationMatrix = new Matrix(4, 4);
+		zRotationMatrix.data[0][0] = Math.cos(angle);
+		zRotationMatrix.data[0][1] = Math.sin(angle);
+		zRotationMatrix.data[1][0] = -Math.sin(angle);
+		zRotationMatrix.data[1][1] = Math.cos(angle);
+		zRotationMatrix.data[2][2] = 1.0;
+		zRotationMatrix.data[3][3] = 1.0;
+		return zRotationMatrix;
+	}
+
+	/**
+	 * Updates the x-rotation matrix to match the value of the new angle - must be
+	 * called every cycle
+	 */
+	public void updateXRotationMatrix(Matrix xMatrix, double angle) {
+		xMatrix.data[0][0] = 1.0;
+		xMatrix.data[1][1] = Math.cos(angle);
+		xMatrix.data[1][2] = Math.sin(angle);
+		xMatrix.data[2][1] = -Math.sin(angle);
+		xMatrix.data[2][2] = Math.cos(angle);
+		xMatrix.data[3][3] = 1.0;
+	}
+
+	/**
 	 * Updates the y-rotation matrix to match the value of the new angle - must be
 	 * called every cycle but is never currently used
 	 */
@@ -630,6 +633,19 @@ public class Bresenham extends Game {
 		yMatrix.data[1][1] = 1.0;
 		yMatrix.data[2][2] = Math.cos(angle);
 		yMatrix.data[3][3] = 1.0;
+	}
+
+	/**
+	 * Updates the z-rotation matrix to match the value of the new angle - must be
+	 * called every cycle
+	 */
+	public void updateZRotationMatrix(Matrix zMatrix, double angle) {
+		zMatrix.data[0][0] = Math.cos(angle);
+		zMatrix.data[0][1] = Math.sin(angle);
+		zMatrix.data[1][0] = -Math.sin(angle);
+		zMatrix.data[1][1] = Math.cos(angle);
+		zMatrix.data[2][2] = 1.0;
+		zMatrix.data[3][3] = 1.0;
 	}
 
 	/**
@@ -706,12 +722,24 @@ public class Bresenham extends Game {
 	 * Lowers the rendering quality of the graphics object as much as possible - no
 	 * noticeable performance gain
 	 */
-	public void lowerRenderQuality(Graphics graphics) {
+	public void decreaseRenderQuality(Graphics graphics) {
 		Graphics2D graphics2d = (Graphics2D) graphics;
 		graphics2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
 		graphics2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_SPEED);
 		graphics2d.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_SPEED);
 		graphics2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
+	}
+
+	/**
+	 * Highers the rendering quality of the graphics object as much as possible - no
+	 * noticeable performance loss
+	 */
+	public void increaseRenderQuality(Graphics graphics) {
+		Graphics2D graphics2d = (Graphics2D) graphics;
+		graphics2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		graphics2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
+		graphics2d.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
+		graphics2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
 	}
 
 	public static void main(String[] args) {

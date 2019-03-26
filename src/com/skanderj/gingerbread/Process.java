@@ -16,6 +16,9 @@ public abstract class Process {
 		this.isRunning = false;
 	}
 
+	/**
+	 * Starts the thread - does nothing if the same instance is already running
+	 */
 	public final void start() {
 		if (this.isRunning) {
 			return;
@@ -25,8 +28,14 @@ public abstract class Process {
 		}
 	}
 
+	/**
+	 * Called before entering the main loop
+	 */
 	protected abstract void create();
 
+	/**
+	 * Stops the thread - does nothing if the same instance is already running
+	 */
 	public final void stop() {
 		if (this.isRunning) {
 			this.isRunning = false;
@@ -36,6 +45,9 @@ public abstract class Process {
 		}
 	}
 
+	/**
+	 * Called after exiting the main loop
+	 */
 	protected abstract void destroy();
 
 	private void run() {
@@ -46,5 +58,8 @@ public abstract class Process {
 		this.destroy();
 	}
 
+	/**
+	 * Gets called constantly until thread is stopped
+	 */
 	protected abstract void loop();
 }
