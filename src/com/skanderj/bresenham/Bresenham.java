@@ -47,7 +47,7 @@ public class Bresenham extends Game {
 		this.window = new Window(this, Bresenham.IDENTIFIER, Bresenham.EFFECTIVE_WIDTH, Bresenham.EFFECTIVE_HEIGHT);
 		this.keyboard = new Keyboard();
 		this.mouse = new Mouse();
-		this.meshFile = "cube.obj";
+		this.meshFile = "teapot.obj";
 	}
 
 	@Override
@@ -163,7 +163,7 @@ public class Bresenham extends Game {
 			}
 		}
 		// Update rotation angle (optional)
-		// this.rotationAngle += 0.05 * delta;
+		this.rotationAngle += 0.05 * delta;
 		// Update rotation matrices
 		{
 			// Update z rotation matrix
@@ -238,8 +238,6 @@ public class Bresenham extends Game {
 						localTriangle = this.scaleTriangleToView(localTriangle);
 						// Add to vector
 						queueVector.add(localTriangle);
-						// Draw line
-						graphics.setColor(Color.RED);
 					}
 				}
 			}
@@ -258,13 +256,9 @@ public class Bresenham extends Game {
 					 **/
 					// Graphics fill() implementation - slow down compared to wireframe
 					// rendering but to be expected
-					// this.fillTriangle_GRAPHICS_IMPL(graphics, orderedTriangle);
-					Vertex normalVertex = this.normalToTriangle(orderedTriangle);
-					normalVertex = this.scaleVertexToView(normalVertex);
-					graphics.setColor(Color.RED);
-					graphics.drawLine((int) normalVertex.x, (int) normalVertex.y, (int) orderedTriangle.vectors[0].x, (int) orderedTriangle.vectors[0].y);
+					this.fillTriangle_GRAPHICS_IMPL(graphics, orderedTriangle);
 					// Graphics draw() implements - fastest draw method
-					this.drawTriangle_GRAPHICS_IMPL(graphics, orderedTriangle);
+					// this.drawTriangle_GRAPHICS_IMPL(graphics, orderedTriangle);
 				}
 			}
 		}
