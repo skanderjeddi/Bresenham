@@ -53,7 +53,7 @@ public abstract class Game extends Process {
 			}
 			if (shouldRender) {
 				frames++;
-				BufferStrategy bufferStrategy = this.window.getBufferStrategy(Bresenham.BUFFERS);
+				BufferStrategy bufferStrategy = this.window.getBufferStrategy();
 				Graphics graphics = bufferStrategy.getDrawGraphics();
 				this.render(graphics);
 				graphics.dispose();
