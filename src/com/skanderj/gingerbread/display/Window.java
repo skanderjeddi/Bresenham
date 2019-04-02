@@ -15,9 +15,11 @@ public class Window {
 	private Frame frame;
 	private Canvas canvas;
 
+	private int buffers;
+
 	private boolean isCloseRequested;
 
-	public Window(Game game, String title, int width, int height) {
+	public Window(Game game, String title, int width, int height, int buffers) {
 		this.frame = new Frame();
 		this.canvas = new Canvas();
 		this.canvas.setMinimumSize(new Dimension(width, height));
@@ -34,6 +36,7 @@ public class Window {
 				Window.this.isCloseRequested = true;
 			}
 		});
+		this.buffers = buffers;
 		this.isCloseRequested = false;
 	}
 
@@ -45,11 +48,11 @@ public class Window {
 		this.frame.setVisible(false);
 	}
 
-	public BufferStrategy getBufferStrategy(int buffers) {
+	public BufferStrategy getBufferStrategy() {
 		BufferStrategy bufferStrategy = this.canvas.getBufferStrategy();
 		if (bufferStrategy == null) {
-			this.canvas.createBufferStrategy(buffers);
-			return this.getBufferStrategy(buffers);
+			this.canvas.createBufferStrategy(this.buffers);
+			return this.getBufferStrategy();
 		}
 		return bufferStrategy;
 	}

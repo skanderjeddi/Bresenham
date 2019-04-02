@@ -1,20 +1,36 @@
 package com.skanderj.gingerbread.core;
 
+import java.awt.image.BufferStrategy;
+import java.awt.Graphics;
+
 import com.skanderj.gingerbread.Process;
+import com.skanderj.gingerbread.display.Window;
 
 public abstract class Game extends Process {
+	public static final int DEFAULT_SIZE = 400, DEFAULT_BUFFERS = 2;
+
 	private double rate;
+	private Window window;
 
 	public Game(String identifier, double rate) {
+		this(identifier, rate, identifier, Game.DEFAULT_SIZE, Game.DEFAULT_SIZE, Game.DEFAULT_BUFFERS);
+	}
+
+	public Game(String identifier, double rate, String title, int width, int height, int buffers) {
 		super(identifier);
 		this.rate = rate;
+		this.window = new Window(this, title, width, height, buffers);	
 	}
 
 	@Override
-	protected abstract void create();
+	protected void create() {
+		this.window.show();
+	}
 
 	@Override
-	protected abstract void destroy();
+	protected void destroy() {
+		this.window.hide();
+	}
 
 	@Override
 	protected void loop() {
@@ -37,7 +53,11 @@ public abstract class Game extends Process {
 			}
 			if (shouldRender) {
 				frames++;
-				this.render();
+				BufferStrategy bufferStrategy = this.window.getBufferStrategy(Bresenham.BUFFERS);
+				Graphics graphics = bufferStrategy.getDrawGraphics();
+				this.render(graphics);
+				graphics.dispose();
+				bufferStrategy.show();
 			}
 			if ((System.currentTimeMillis() - resetTime) >= 1000) {
 				resetTime += 1000;
@@ -58,6 +78,6 @@ public abstract class Game extends Process {
 	/**
 	 * Renders the game
 	 */
-	public abstract void render();
+	public abstract void render(Graphics graphics);
 
 }
