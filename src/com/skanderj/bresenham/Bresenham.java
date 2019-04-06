@@ -5,7 +5,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.event.KeyEvent;
-import java.awt.image.BufferStrategy;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Vector;
@@ -15,47 +14,51 @@ import com.skanderj.bresenham.math.Triangle;
 import com.skanderj.bresenham.math.Vertex;
 import com.skanderj.gingerbread.Process;
 import com.skanderj.gingerbread.core.Game;
-import com.skanderj.gingerbread.display.Window;
-import com.skanderj.gingerbread.input.Keyboard;
-import com.skanderj.gingerbread.input.Mouse;
 
-public class Bresenham extends Game {
-	public static final String IDENTIFIER = "Bresenham";
-	public static final double RATE = 60.0D;
+public final class Bresenham extends Game {
+	// Singleton model
+	private static Bresenham instance;
 
-	public static final double WIDTH = 250, HEIGHT = 200;
-	public static final double WIDTH_SCALING_FACTOR = 0.5 * Bresenham.EFFECTIVE_WIDTH, HEIGHT_SCALING_FACTOR = 0.5 * Bresenham.EFFECTIVE_HEIGHT;
+	public static final Bresenham getInstance() {
+		return Bresenham.instance == null ? Bresenham.instance = new Bresenham() : Bresenham.instance;
+	}
 
-	public static final int OG = 0, SCALE = 4, BUFFERS = 2, EFFECTIVE_WIDTH = (int) (Bresenham.WIDTH * Bresenham.SCALE), EFFECTIVE_HEIGHT = (int) (Bresenham.HEIGHT * Bresenham.SCALE);
-	public static final double FOV_DEGREES = 90, ASPECT_RATIO = Bresenham.HEIGHT / Bresenham.WIDTH, NEAR_FIELD = 0.1, FAR_FIELD = 1000.0;
+	// General properties
+	public static final String PROCESS_IDENTIFIER = "bresenham";
+	public static final double PER_SECOND_ACTIONS = 60.0D;
+	public static final double INTERNAL_WIDTH = 250, INTERNAL_HEIGHT = 200;
 
-	private Window window;
-	private Keyboard keyboard;
-	private Mouse mouse;
+	// Window propperties
+	public static final String WINDOW_TITLE = "Bresenham";
+	public static final int ORIGIN_COORD_X = 0, ORIGIN_COORD_Y = 0;
+	public static final int SCALE = 3, BUFFERING_MODE = 2;
+	public static final int WINDOW_WIDTH = (int) (Bresenham.INTERNAL_WIDTH * Bresenham.SCALE), WINDOW_HEIGHT = (int) (Bresenham.INTERNAL_HEIGHT * Bresenham.SCALE);
 
+	// 3D properties
+	public static final double FIELD_OF_VIEW_IN_DEGREES = 90, ASPECT_RATIO = Bresenham.INTERNAL_HEIGHT / Bresenham.INTERNAL_WIDTH, NEAR_FIELD = 0.1, FAR_FIELD = 1000.0;
+	public static final double HORIZONTAL_SCALING_FACTOR = 0.5 * Bresenham.WINDOW_WIDTH, VERTICAL_SCALING_FACTOR = 0.5 * Bresenham.WINDOW_HEIGHT;
+
+	// Matrices
 	private Matrix projectionMatrix, translationMatrix, zRotationMatrix, xRotationMatrix, worldMatrix, cameraMatrix, viewMatrix;
 	private double rotationAngle;
 
+	// Individual vertices
 	private Vertex cameraLocation, lightDirection, upAxis, gaze, target;
 	private double yaw;
 
 	private Mesh mainMesh;
-	private String meshFile;
+	private String meshFileName;
 
-	public Bresenham() {
-		super(Bresenham.IDENTIFIER, Bresenham.RATE);
-		this.window = new Window(this, Bresenham.IDENTIFIER, Bresenham.EFFECTIVE_WIDTH, Bresenham.EFFECTIVE_HEIGHT);
-		this.keyboard = new Keyboard();
-		this.mouse = new Mouse();
-		this.meshFile = "teapot.obj";
+	private Bresenham() {
+		super(Bresenham.PROCESS_IDENTIFIER, Bresenham.PER_SECOND_ACTIONS, Bresenham.WINDOW_TITLE, Bresenham.WINDOW_WIDTH, Bresenham.WINDOW_HEIGHT, Bresenham.BUFFERING_MODE);
+		this.meshFileName = "teapot.obj";
 	}
 
 	@Override
 	protected void create() {
 		// Initialize camera location & lighting
 		{
-			// Camera location as vertex - will change in the future for real camera
-			// implementation
+			// Camera location as vertex
 			this.cameraLocation = new Vertex(0.0, 0.0, 0.0);
 			// Light direction as negative z axis - "coming towards the player" to allow
 			// lighting
@@ -74,9 +77,9 @@ public class Bresenham extends Game {
 		// Initialize program matrices
 		{
 			// Projection matrix
-			this.projectionMatrix = this.createProjectionMatrix(Bresenham.FOV_DEGREES, Bresenham.ASPECT_RATIO, Bresenham.NEAR_FIELD, Bresenham.FAR_FIELD);
+			this.projectionMatrix = this.createProjectionMatrix(Bresenham.FIELD_OF_VIEW_IN_DEGREES, Bresenham.ASPECT_RATIO, Bresenham.NEAR_FIELD, Bresenham.FAR_FIELD);
 			// Translation matrix
-			this.translationMatrix = this.createTranslationMatrix(0.0, 0.0, 5.0);
+			this.translationMatrix = this.createTranslationMatrix(0.0, 0.0, 8.0);
 			// Initialize rotation angle
 			this.rotationAngle = 0.0;
 			// Create z axis rotation matrix
@@ -91,21 +94,18 @@ public class Bresenham extends Game {
 		}
 		// Spaceship mesh
 		try {
-			this.mainMesh = Mesh.loadFromFile(this.meshFile);
+			this.mainMesh = Mesh.loadFromFile(this.meshFileName);
 		} catch (NumberFormatException | IOException exception) {
 			exception.printStackTrace();
 			// Can't load mesh so exit
 			System.exit(Process.EXIT_FAILURE);
 		}
-		// Show window
-		this.window.registerKeyboard(this.keyboard);
-		this.window.registerMouse(this.mouse);
-		this.window.show();
+		super.create();
 	}
 
 	@Override
 	protected void destroy() {
-		this.window.hide();
+		super.destroy();
 		System.exit(Process.EXIT_SUCCESS);
 	}
 
@@ -197,73 +197,68 @@ public class Bresenham extends Game {
 	}
 
 	@Override
-	public void render() {
-		BufferStrategy bufferStrategy = this.window.getBufferStrategy(Bresenham.BUFFERS);
-		Graphics graphics = bufferStrategy.getDrawGraphics();
+	public void render(Graphics graphics) {
+		System.out.println("here");
+		// Clear the screen
+		graphics.setColor(Color.BLACK);
+		graphics.fillRect(Bresenham.ORIGIN_COORD_X, Bresenham.ORIGIN_COORD_X, Bresenham.WINDOW_WIDTH, Bresenham.WINDOW_HEIGHT);
+		// Set worse rendering hints (possibly optional?)
+		this.increaseRenderQuality(graphics);
+		// Triangles transform
+		Vector<Triangle> queueVector = new Vector<Triangle>();
 		{
-			// Set worse rendering hints (possibly optional?)
-			this.decreaseRenderQuality(graphics);
-			// Clear the screen
-			graphics.setColor(Color.BLACK);
-			graphics.fillRect(Bresenham.OG, Bresenham.OG, Bresenham.EFFECTIVE_WIDTH, Bresenham.EFFECTIVE_HEIGHT);
-			// Triangles transform
-			Vector<Triangle> queueVector = new Vector<Triangle>();
-			{
-				// Parse triangles in cube mesh
-				for (Triangle triangle : this.mainMesh.triangles) {
-					// Copy data from current triangle - we don't want to change the original data!
-					Triangle localTriangle = new Triangle(triangle);
-					// Transform localTriangle
-					localTriangle = this.applyMatrixToTriangle_NW(localTriangle, this.worldMatrix);
-					// Calculate normal data
-					Vertex normalVertex = this.normalToTriangle(localTriangle);
-					normalVertex = this.normalize(normalVertex);
-					// Calculate camera ray
-					Vertex cameraRay = this.subtract(localTriangle.vectors[0], this.cameraLocation);
-					// Calculate dot product to evaluate if triangle is in view
-					double normalCameraDotProduct = this.dotProduct(normalVertex, cameraRay);
-					if (normalCameraDotProduct < 0.0) {
-						// Set color
-						float dotProduct = (float) Math.max(0.1f, this.dotProduct(this.lightDirection, normalVertex));
-						localTriangle.color = new Color(dotProduct, dotProduct, dotProduct);
-						// Transform world space to view space
-						localTriangle = this.applyMatrixToTriangle_NW(localTriangle, this.viewMatrix);
-						// Multiply by protection matrix 3D -> 2D
-						localTriangle = this.applyMatrixToTriangle_NW(localTriangle, this.projectionMatrix);
-						// Normalize
-						localTriangle = this.normalizeTriangle(localTriangle);
-						// Scale into view
-						Vertex viewOffset = new Vertex(1.0, 1.0, 0.0);
-						localTriangle = this.addVertexToTriangle(localTriangle, viewOffset);
-						localTriangle = this.scaleTriangleToView(localTriangle);
-						// Add to vector
-						queueVector.add(localTriangle);
-					}
-				}
-			}
-			// Sort all the vertices
-			Collections.sort(queueVector);
-			// Draw sorted triangles
-			{
-				for (Triangle orderedTriangle : queueVector) {
-					graphics.setColor(orderedTriangle.color);
-					// Own algorithm, neither fast nor really slow
-					/**
-					 * this.drawTriangle_LINE_BY_LINE(graphics, orderedTriangle.vectors[0].x,
-					 * orderedTriangle.vectors[0].y, // \n orderedTriangle.vectors[1].x,
-					 * orderedTriangle.vectors[1].y, // \n orderedTriangle.vectors[2].x,
-					 * orderedTriangle.vectors[2].y, // \n orderedTriangle.color);
-					 **/
-					// Graphics fill() implementation - slow down compared to wireframe
-					// rendering but to be expected
-					this.fillTriangle_GRAPHICS_IMPL(graphics, orderedTriangle);
-					// Graphics draw() implements - fastest draw method
-					// this.drawTriangle_GRAPHICS_IMPL(graphics, orderedTriangle);
+			// Parse triangles in cube mesh
+			for (Triangle triangle : this.mainMesh.triangles) {
+				// Copy data from current triangle - we don't want to change the original data!
+				Triangle localTriangle = new Triangle(triangle);
+				// Transform localTriangle
+				localTriangle = this.applyMatrixToTriangle_NW(localTriangle, this.worldMatrix);
+				// Calculate normal data
+				Vertex normalVertex = this.normalToTriangle(localTriangle);
+				normalVertex = this.normalize(normalVertex);
+				// Calculate camera ray
+				Vertex cameraRay = this.subtract(localTriangle.vectors[0], this.cameraLocation);
+				// Calculate dot product to evaluate if triangle is in view
+				double normalCameraDotProduct = this.dotProduct(normalVertex, cameraRay);
+				if (normalCameraDotProduct < 0.0) {
+					// Set color
+					float dotProduct = (float) Math.max(0.1f, this.dotProduct(this.lightDirection, normalVertex));
+					localTriangle.color = new Color(dotProduct, dotProduct, dotProduct);
+					// Transform world space to view space
+					localTriangle = this.applyMatrixToTriangle_NW(localTriangle, this.viewMatrix);
+					// Multiply by protection matrix 3D -> 2D
+					localTriangle = this.applyMatrixToTriangle_NW(localTriangle, this.projectionMatrix);
+					// Normalize
+					localTriangle = this.normalizeTriangle(localTriangle);
+					// Scale into view
+					Vertex viewOffset = new Vertex(1.0, 1.0, 0.0);
+					localTriangle = this.addVertexToTriangle(localTriangle, viewOffset);
+					localTriangle = this.scaleTriangleToView(localTriangle);
+					// Add to vector
+					queueVector.add(localTriangle);
 				}
 			}
 		}
-		graphics.dispose();
-		bufferStrategy.show();
+		// Sort all the vertices
+		Collections.sort(queueVector);
+		// Draw sorted triangles
+		{
+			for (Triangle orderedTriangle : queueVector) {
+				graphics.setColor(orderedTriangle.color);
+				// Own algorithm, neither fast nor really slow
+				/**
+				 * this.drawTriangle_LINE_BY_LINE(graphics, orderedTriangle.vectors[0].x,
+				 * orderedTriangle.vectors[0].y, // \n orderedTriangle.vectors[1].x,
+				 * orderedTriangle.vectors[1].y, // \n orderedTriangle.vectors[2].x,
+				 * orderedTriangle.vectors[2].y, // \n orderedTriangle.color);
+				 **/
+				// Graphics fill() implementation - slow down compared to wireframe
+				// rendering but to be expected
+				this.fillTriangle_GRAPHICS_IMPL(graphics, orderedTriangle);
+				// Graphics draw() implements - fastest draw method
+				// this.drawTriangle_GRAPHICS_IMPL(graphics, orderedTriangle);
+			}
+		}
 	}
 
 	/**
@@ -508,7 +503,7 @@ public class Bresenham extends Game {
 	 */
 	public Vertex scaleVertexToView(Vertex vertex) {
 		vertex.print();
-		Vertex scaledVertex = new Vertex(vertex.x * Bresenham.WIDTH_SCALING_FACTOR, vertex.y * Bresenham.HEIGHT_SCALING_FACTOR, vertex.z);
+		Vertex scaledVertex = new Vertex(vertex.x * Bresenham.HORIZONTAL_SCALING_FACTOR, vertex.y * Bresenham.VERTICAL_SCALING_FACTOR, vertex.z);
 		scaledVertex.print();
 		return scaledVertex;
 	}
@@ -519,8 +514,8 @@ public class Bresenham extends Game {
 	public Triangle scaleTriangleToView(Triangle triangle) {
 		Triangle transformedTriangle = new Triangle(triangle);
 		for (int index = 0; index < 3; index += 1) {
-			transformedTriangle.vectors[index].x *= Bresenham.WIDTH_SCALING_FACTOR;
-			transformedTriangle.vectors[index].y *= Bresenham.HEIGHT_SCALING_FACTOR;
+			transformedTriangle.vectors[index].x *= Bresenham.HORIZONTAL_SCALING_FACTOR;
+			transformedTriangle.vectors[index].y *= Bresenham.VERTICAL_SCALING_FACTOR;
 		}
 		return transformedTriangle;
 	}
@@ -709,7 +704,7 @@ public class Bresenham extends Game {
 			resultMatrix.data[3][2] = -((matrix.data[3][0] * resultMatrix.data[0][2]) + (matrix.data[3][1] * resultMatrix.data[1][2]) + (matrix.data[3][2] * resultMatrix.data[2][2]));
 			resultMatrix.data[3][3] = 1.0;
 		}
-		return matrix;
+		return resultMatrix;
 	}
 
 	/**
@@ -734,9 +729,5 @@ public class Bresenham extends Game {
 		graphics2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
 		graphics2d.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
 		graphics2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-	}
-
-	public static void main(String[] args) {
-		new Bresenham().start();
 	}
 }
