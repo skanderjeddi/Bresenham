@@ -25,7 +25,7 @@ public final class Bresenham extends Game {
 
 	// General properties
 	public static final String PROCESS_IDENTIFIER = "bresenham";
-	public static final double PER_SECOND_ACTIONS = 60.0D;
+	public static final double PER_SECOND_ACTIONS = 10000.0;
 	public static final double INTERNAL_WIDTH = 250, INTERNAL_HEIGHT = 200;
 
 	// Window propperties
@@ -72,7 +72,7 @@ public final class Bresenham extends Game {
 			// Target
 			this.target = new Vertex(0.0, 0.0, 1.0);
 			// Yaw
-			this.yaw = 0;
+			this.yaw = 0.0;
 		}
 		// Initialize program matrices
 		{
@@ -198,12 +198,11 @@ public final class Bresenham extends Game {
 
 	@Override
 	public void render(Graphics graphics) {
-		System.out.println("here");
 		// Clear the screen
 		graphics.setColor(Color.BLACK);
 		graphics.fillRect(Bresenham.ORIGIN_COORD_X, Bresenham.ORIGIN_COORD_X, Bresenham.WINDOW_WIDTH, Bresenham.WINDOW_HEIGHT);
 		// Set worse rendering hints (possibly optional?)
-		this.increaseRenderQuality(graphics);
+		this.decreaseRenderQuality(graphics);
 		// Triangles transform
 		Vector<Triangle> queueVector = new Vector<Triangle>();
 		{
