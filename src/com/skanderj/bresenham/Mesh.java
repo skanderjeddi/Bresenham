@@ -56,8 +56,4 @@ public class Mesh {
 			this.triangles[index] = array[index];
 		}
 	}
-
-	/**
-	 * shoutout nathan maniquaire
-	 */
 }
