@@ -499,9 +499,7 @@ public final class Bresenham extends Game {
 	 * Scales a vertex to viewing distance
 	 */
 	public Vertex scaleVertexToView(Vertex vertex) {
-		vertex.print();
 		Vertex scaledVertex = new Vertex(vertex.x * Bresenham.HORIZONTAL_SCALING_FACTOR, vertex.y * Bresenham.VERTICAL_SCALING_FACTOR, vertex.z);
-		scaledVertex.print();
 		return scaledVertex;
 	}
 
@@ -511,8 +509,7 @@ public final class Bresenham extends Game {
 	public Triangle scaleTriangleToView(Triangle triangle) {
 		Triangle transformedTriangle = new Triangle(triangle);
 		for (int index = 0; index < 3; index += 1) {
-			transformedTriangle.vectors[index].x *= Bresenham.HORIZONTAL_SCALING_FACTOR;
-			transformedTriangle.vectors[index].y *= Bresenham.VERTICAL_SCALING_FACTOR;
+			this.scaleVertexToView(transformedTriangle.vectors[index]);
 		}
 		return transformedTriangle;
 	}
