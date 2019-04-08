@@ -25,17 +25,17 @@ public final class Bresenham extends Game {
 
 	// General properties
 	public static final String PROCESS_IDENTIFIER = "bresenham";
-	public static final double PER_SECOND_ACTIONS = 10000.0;
-	public static final double INTERNAL_WIDTH = 250, INTERNAL_HEIGHT = 200;
+	public static final double PER_SECOND_ACTIONS = 60.0;
+	public static final double WIDTH = 250, HEIGHT = 200;
 
 	// Window propperties
 	public static final String WINDOW_TITLE = "Bresenham";
 	public static final int ORIGIN_COORD_X = 0, ORIGIN_COORD_Y = 0;
 	public static final int SCALE = 3, BUFFERING_MODE = 2;
-	public static final int WINDOW_WIDTH = (int) (Bresenham.INTERNAL_WIDTH * Bresenham.SCALE), WINDOW_HEIGHT = (int) (Bresenham.INTERNAL_HEIGHT * Bresenham.SCALE);
+	public static final int WINDOW_WIDTH = (int) (Bresenham.WIDTH * Bresenham.SCALE), WINDOW_HEIGHT = (int) (Bresenham.HEIGHT * Bresenham.SCALE);
 
 	// 3D properties
-	public static final double FIELD_OF_VIEW_IN_DEGREES = 90, ASPECT_RATIO = Bresenham.INTERNAL_HEIGHT / Bresenham.INTERNAL_WIDTH, NEAR_FIELD = 0.1, FAR_FIELD = 1000.0;
+	public static final double FIELD_OF_VIEW_IN_DEGREES = 90, ASPECT_RATIO = Bresenham.HEIGHT / Bresenham.WIDTH, NEAR_FIELD = 0.1, FAR_FIELD = 1000.0;
 	public static final double HORIZONTAL_SCALING_FACTOR = 0.5 * Bresenham.WINDOW_WIDTH, VERTICAL_SCALING_FACTOR = 0.5 * Bresenham.WINDOW_HEIGHT;
 
 	// Matrices
@@ -129,16 +129,16 @@ public final class Bresenham extends Game {
 			// Move camera
 			{
 				if (upKeyHeld) {
-					this.cameraLocation.y += 0.5 * delta;
-				}
-				if (downKeyHeld) {
 					this.cameraLocation.y -= 0.5 * delta;
 				}
+				if (downKeyHeld) {
+					this.cameraLocation.y += 0.5 * delta;
+				}
 				if (rightKeyHeld) {
-					this.cameraLocation.x -= 0.5 * delta;
+					this.cameraLocation.x += 0.5 * delta;
 				}
 				if (leftKeyHeld) {
-					this.cameraLocation.x += 0.5 * delta;
+					this.cameraLocation.x -= 0.5 * delta;
 				}
 			}
 			Vertex scaledDirection = this.multiply(this.gaze, 0.5 * delta);
@@ -146,11 +146,11 @@ public final class Bresenham extends Game {
 			{
 				// Turn left
 				if (qKeyHeld) {
-					this.yaw -= 0.05 * delta;
+					this.yaw += 0.05 * delta;
 				}
 				// Turn right
 				if (dKeyHeld) {
-					this.yaw += 0.05 * delta;
+					this.yaw -= 0.05 * delta;
 				}
 				// Go forward
 				if (zKeyHeld) {
@@ -170,8 +170,6 @@ public final class Bresenham extends Game {
 			this.updateZRotationMatrix(this.zRotationMatrix, this.rotationAngle * 0.5);
 			// Update x rotation matrix
 			this.updateXRotationMatrix(this.xRotationMatrix, this.rotationAngle);
-			// Update y rotation matrix (optional)
-			// this.updateYRotationMatrix(this.yRotationMatrix, this.rotationAngle);
 		}
 		// Create transformation matrix
 		{
@@ -202,7 +200,7 @@ public final class Bresenham extends Game {
 		graphics.setColor(Color.BLACK);
 		graphics.fillRect(Bresenham.ORIGIN_COORD_X, Bresenham.ORIGIN_COORD_X, Bresenham.WINDOW_WIDTH, Bresenham.WINDOW_HEIGHT);
 		// Set worse rendering hints (possibly optional?)
-		this.decreaseRenderQuality(graphics);
+		this.increaseRenderQuality(graphics);
 		// Triangles transform
 		Vector<Triangle> queueVector = new Vector<Triangle>();
 		{
@@ -520,6 +518,37 @@ public final class Bresenham extends Game {
 	}
 
 	/**
+	 * Returns shortest distance from point to plane, plane normal must be
+	 * normalised
+	 */
+	public double distancePointToPlane(Vertex planePoint, Vertex planeNormal, Vertex target) {
+		target = this.normalize(target);
+		return (((planeNormal.x * target.x) + (planeNormal.y * target.y) + (planeNormal.z * target.z)) - this.dotProduct(planeNormal, planePoint));
+	}
+
+	/**
+	 * Returns the intersection of a plane and a vertex
+	 */
+	public Vertex vertexPlaneIntersection(Vertex planePoint, Vertex planeNormal, Vertex lineStart, Vertex lineEnd) {
+		planeNormal = this.normalize(planeNormal);
+		double planeDotProduct = -this.dotProduct(planeNormal, planePoint);
+		double firstEnd = this.dotProduct(lineStart, planeNormal);
+		double secondEnd = this.dotProduct(lineEnd, planeNormal);
+		double tangent = (-planeDotProduct - firstEnd) / (secondEnd - firstEnd);
+		Vertex line = this.subtract(lineEnd, lineStart);
+		Vertex lineToIntersect = this.multiply(line, tangent);
+		return this.add(lineStart, lineToIntersect);
+	}
+
+	/**
+	 *
+	 */
+	public int clipAgainstPlane(Vertex planePoint, Vertex planeNormal, Triangle input, Triangle firstOutput, Triangle secondOutput) {
+		planeNormal = this.normalize(planeNormal);
+		return -1;
+	}
+
+	/**
 	 * Returns the 4-by-4 projection (world->view) matrix - this is where the 3D to
 	 * 2D magic takes place
 	 */
@@ -724,7 +753,8 @@ public final class Bresenham extends Game {
 	 */
 	public void increaseRenderQuality(Graphics graphics) {
 		Graphics2D graphics2d = (Graphics2D) graphics;
-		graphics2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		// graphics2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+		// RenderingHints.VALUE_ANTIALIAS_ON);
 		graphics2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
 		graphics2d.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
 		graphics2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
