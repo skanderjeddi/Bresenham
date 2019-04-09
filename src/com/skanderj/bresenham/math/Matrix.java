@@ -1,5 +1,3 @@
-package com.skanderj.bresenham.math;
-
 import java.util.Random;
 
 public final class Matrix {
@@ -65,10 +63,10 @@ public final class Matrix {
 	 * @param scalar
 	 * @return k * [M]
 	 */
-	public final Matrix multiply(double k) {
-		Matrix resmat = new Matrix(this);
-		for (int row = 0; row < this.rows; row += 1) {
-			for (int line = 0; line < this.lines; line += 1) {
+	public static final Matrix multiply(Matrix matrix, double k) {
+		Matrix resmat = new Matrix(matrix);
+		for (int row = 0; row < matrix.rows; row += 1) {
+			for (int line = 0; line < matrix.lines; line += 1) {
 				resmat.data[row][line] *= k;
 			}
 		}
@@ -81,11 +79,11 @@ public final class Matrix {
 	 * @param mat
 	 * @return [A] + [B]
 	 */
-	public final Matrix add(Matrix mat) {
-		Matrix resmat = new Matrix(this);
-		for (int row = 0; row < this.rows; row += 1) {
-			for (int line = 0; line < this.lines; line += 1) {
-				resmat.data[row][line] += mat.data[row][line];
+	public static final Matrix add(Matrix firstMat, Matrix secondMatrix) {
+		Matrix resmat = new Matrix(firstMat);
+		for (int row = 0; row < firstMat.rows; row += 1) {
+			for (int line = 0; line < firstMat.lines; line += 1) {
+				resmat.data[row][line] += secondMatrix.data[row][line];
 			}
 		}
 		return resmat;
@@ -97,9 +95,8 @@ public final class Matrix {
 	 * @param mat
 	 * @return [A] - [B]
 	 */
-	public final Matrix subtract(Matrix mat) {
-		mat.multiply(-1);
-		return this.add(mat);
+	public static final Matrix subtract(Matrix firstMatrix, Matrix secondMatrix) {
+		return firstMatrix.add(secondMatrix, Matrix.multiply(secondMatrix, -1));
 	}
 
 	/**
@@ -108,23 +105,23 @@ public final class Matrix {
 	 * @param mat
 	 * @return [A] * [B]
 	 */
-	public final Matrix multiply(Matrix mat) {
+	public static final Matrix multiply(Matrix firstMatrix, Matrix secondMatrix) {
 		Matrix resmat;
-		if (this.lines == mat.rows) {
-			resmat = new Matrix(this.rows, mat.lines);
+		if (firstMatrix.lines == secondMatrix.rows) {
+			resmat = new Matrix(firstMatrix.rows, secondMatrix.lines);
 			for (int row = 0; row < resmat.rows; row += 1) {
 				for (int line = 0; line < resmat.lines; line += 1) {
-					for (int cursor = 0; cursor < this.lines; cursor += 1) {
-						resmat.data[row][line] += (this.data[row][cursor] * mat.data[cursor][line]);
+					for (int cursor = 0; cursor < firstMatrix.lines; cursor += 1) {
+						resmat.data[row][line] += (firstMatrix.data[row][cursor] * secondMatrix.data[cursor][line]);
 					}
 				}
 			}
-		} else if (mat.lines == this.rows) {
-			resmat = new Matrix(mat.rows, this.lines);
+		} else if (secondMatrix.lines == firstMatrix.rows) {
+			resmat = new Matrix(secondMatrix.rows, firstMatrix.lines);
 			for (int row = 0; row < resmat.rows; row += 1) {
 				for (int line = 0; line < resmat.lines; line += 1) {
-					for (int cursor = 0; cursor < mat.lines; cursor += 1) {
-						resmat.data[row][line] += (mat.data[row][cursor] * this.data[cursor][line]);
+					for (int cursor = 0; cursor < secondMatrix.lines; cursor += 1) {
+						resmat.data[row][line] += (secondMatrix.data[row][cursor] * firstMatrix.data[cursor][line]);
 					}
 				}
 			}
@@ -139,14 +136,67 @@ public final class Matrix {
 	 *
 	 * @return t[A]
 	 */
-	public final Matrix transpose() {
-		Matrix resmat = new Matrix(this.lines, this.rows);
-		for (int row = 0; row < this.rows; row += 1) {
-			for (int line = 0; line < this.lines; line += 1) {
-				resmat.data[line][row] = this.data[row][line];
+	public static final Matrix transpose(Matrix matrix) {
+		Matrix resmat = new Matrix(matrix.lines, matrix.rows);
+		for (int row = 0; row < matrix.rows; row += 1) {
+			for (int line = 0; line < matrix.lines; line += 1) {
+				resmat.data[line][row] = matrix.data[row][line];
 			}
 		}
 		return resmat;
+	}
+
+	/**
+	 * @return the determinant of a matrix
+	 */
+	public static final double determinant(Matrix matrix) {
+        if (matrix.rows != matrix.lines) {
+            throw new IllegalStateException("invalid dimensions");
+        }
+        if (matrix.rows == 2) {
+            return matrix.data[0][0] * matrix.data[1][1] - matrix.data[0][1] * matrix.data[1][0];
+        }
+        double determinant = 0.0;
+        for (int row = 0; row < matrix.rows; row += 1) {
+            determinant += Math.pow(-1, row) * matrix.data[0][row] * Matrix.determinant(minor(matrix, 0, row));
+        }
+        return determinant;
+    }
+
+    /**
+     * @return the minor of a given matrix
+     */
+    public static final Matrix minor(Matrix matrix, int targetRow, int targetColumn) {
+		Matrix minor = new Matrix(matrix.rows - 1, matrix.lines - 1);
+		for (int row = 0; row < matrix.rows; row += 1) {
+            for (int line = 0; row != targetRow && line < matrix.lines; line += 1) {
+                if (line != targetColumn) {
+                    minor.data[row < targetRow ? row : row - 1][line < targetColumn ? line : line - 1] = matrix.data[row][line];
+                }
+            }
+        }
+		return minor;
+    }
+    
+    /**
+     * @return the inverse of a given matrix
+     */
+    public static final Matrix inverse(Matrix matrix) {
+		Matrix inverse = new Matrix(matrix.rows, matrix.lines);
+		for (int row = 0; row < matrix.rows; row += 1) {
+            for (int line = 0; line < matrix.lines; line += 1) {
+                inverse.data[row][line] = Math.pow(-1, row + line) * determinant(minor(matrix, row, line));
+            }
+        }
+        double determinant = 1.0 / Matrix.determinant(matrix);
+		for (int row = 0; row < inverse.rows; row += 1) {
+			for (int line = 0; line <= row; line += 1) {
+				double temp = inverse.data[row][line];
+				inverse.data[row][line] = inverse.data[line][row] * determinant;
+				inverse.data[line][row] = temp * determinant;
+			}
+		}
+		return inverse;
 	}
 
 	public final void print() {
@@ -171,5 +221,14 @@ public final class Matrix {
 				target[row][line] = source[row][line];
 			}
 		}
-	}
+    }
+    
+    public static void main(String[] args) {
+        Matrix smat = Matrix.random(10, 10, 10);
+        Matrix ismat = Matrix.inverse(smat);
+        Matrix pmat = Matrix.multiply(smat, ismat);
+        smat.print();
+        ismat.print();
+        pmat.print();
+    }
 }
