@@ -174,9 +174,9 @@ public final class Bresenham extends Game {
 		// Create transformation matrix
 		{
 			// Z * X rotation product
-			this.worldMatrix = this.zRotationMatrix.multiply(this.xRotationMatrix);
+			this.worldMatrix = Matrix.multiply(this.zRotationMatrix, this.xRotationMatrix);
 			// Translation
-			this.worldMatrix = this.worldMatrix.multiply(this.translationMatrix);
+			this.worldMatrix = Matrix.multiply(this.worldMatrix, this.translationMatrix);
 		}
 		// Camera handling
 		{
@@ -425,7 +425,7 @@ public final class Bresenham extends Game {
 	 */
 	public Vertex applyMatrixToVector_MPW(Vertex vertex, Matrix matrix) {
 		Matrix vectMat = this.convertVertexToMatrix(vertex);
-		Matrix productMat = vectMat.multiply(matrix);
+		Matrix productMat = Matrix.multiply(vectMat, matrix);
 		return this.convertMatrixToVertex(productMat);
 	}
 
@@ -446,7 +446,7 @@ public final class Bresenham extends Game {
 	 */
 	public Triangle applyMatrixToTriangle_NW(Triangle triangle, Matrix matrix) {
 		Matrix triangleMatrix = this.convertTriangleToMatrix(triangle);
-		Matrix resultMatrix = triangleMatrix.multiply(matrix);
+		Matrix resultMatrix = Matrix.multiply(triangleMatrix, matrix);
 		return this.convertMatrixToTriangle(resultMatrix, triangle.color);
 	}
 

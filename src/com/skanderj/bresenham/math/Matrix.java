@@ -1,3 +1,5 @@
+package com.skanderj.bresenham.math;
+
 import java.util.Random;
 
 public final class Matrix {
@@ -96,7 +98,7 @@ public final class Matrix {
 	 * @return [A] - [B]
 	 */
 	public static final Matrix subtract(Matrix firstMatrix, Matrix secondMatrix) {
-		return firstMatrix.add(secondMatrix, Matrix.multiply(secondMatrix, -1));
+		return Matrix.add(firstMatrix, Matrix.multiply(secondMatrix, -1));
 	}
 
 	/**
@@ -221,14 +223,5 @@ public final class Matrix {
 				target[row][line] = source[row][line];
 			}
 		}
-    }
-    
-    public static void main(String[] args) {
-        Matrix smat = Matrix.random(10, 10, 10);
-        Matrix ismat = Matrix.inverse(smat);
-        Matrix pmat = Matrix.multiply(smat, ismat);
-        smat.print();
-        ismat.print();
-        pmat.print();
     }
 }
