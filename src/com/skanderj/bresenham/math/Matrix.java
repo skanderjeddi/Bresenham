@@ -104,7 +104,8 @@ public final class Matrix {
 	/**
 	 * Mutliplies compatible matrices together
 	 *
-	 * @param mat
+	 * @param firstMatrix
+	 * @param secondMatrix
 	 * @return [A] * [B]
 	 */
 	public static final Matrix multiply(Matrix firstMatrix, Matrix secondMatrix) {
@@ -152,45 +153,45 @@ public final class Matrix {
 	 * @return the determinant of a matrix
 	 */
 	public static final double determinant(Matrix matrix) {
-        if (matrix.rows != matrix.lines) {
-            throw new IllegalStateException("invalid dimensions");
-        }
-        if (matrix.rows == 2) {
-            return matrix.data[0][0] * matrix.data[1][1] - matrix.data[0][1] * matrix.data[1][0];
-        }
-        double determinant = 0.0;
-        for (int row = 0; row < matrix.rows; row += 1) {
-            determinant += Math.pow(-1, row) * matrix.data[0][row] * Matrix.determinant(minor(matrix, 0, row));
-        }
-        return determinant;
-    }
+		if (matrix.rows != matrix.lines) {
+			throw new IllegalStateException("invalid dimensions");
+		}
+		if (matrix.rows == 2) {
+			return (matrix.data[0][0] * matrix.data[1][1]) - (matrix.data[0][1] * matrix.data[1][0]);
+		}
+		double determinant = 0.0;
+		for (int row = 0; row < matrix.rows; row += 1) {
+			determinant += Math.pow(-1, row) * matrix.data[0][row] * Matrix.determinant(Matrix.minor(matrix, 0, row));
+		}
+		return determinant;
+	}
 
-    /**
-     * @return the minor of a given matrix
-     */
-    public static final Matrix minor(Matrix matrix, int targetRow, int targetColumn) {
+	/**
+	 * @return the minor of a given matrix
+	 */
+	public static final Matrix minor(Matrix matrix, int targetRow, int targetColumn) {
 		Matrix minor = new Matrix(matrix.rows - 1, matrix.lines - 1);
 		for (int row = 0; row < matrix.rows; row += 1) {
-            for (int line = 0; row != targetRow && line < matrix.lines; line += 1) {
-                if (line != targetColumn) {
-                    minor.data[row < targetRow ? row : row - 1][line < targetColumn ? line : line - 1] = matrix.data[row][line];
-                }
-            }
-        }
+			for (int line = 0; (row != targetRow) && (line < matrix.lines); line += 1) {
+				if (line != targetColumn) {
+					minor.data[row < targetRow ? row : row - 1][line < targetColumn ? line : line - 1] = matrix.data[row][line];
+				}
+			}
+		}
 		return minor;
-    }
-    
-    /**
-     * @return the inverse of a given matrix
-     */
-    public static final Matrix inverse(Matrix matrix) {
+	}
+
+	/**
+	 * @return the inverse of a given matrix
+	 */
+	public static final Matrix inverse(Matrix matrix) {
 		Matrix inverse = new Matrix(matrix.rows, matrix.lines);
 		for (int row = 0; row < matrix.rows; row += 1) {
-            for (int line = 0; line < matrix.lines; line += 1) {
-                inverse.data[row][line] = Math.pow(-1, row + line) * determinant(minor(matrix, row, line));
-            }
-        }
-        double determinant = 1.0 / Matrix.determinant(matrix);
+			for (int line = 0; line < matrix.lines; line += 1) {
+				inverse.data[row][line] = Math.pow(-1, row + line) * Matrix.determinant(Matrix.minor(matrix, row, line));
+			}
+		}
+		double determinant = 1.0 / Matrix.determinant(matrix);
 		for (int row = 0; row < inverse.rows; row += 1) {
 			for (int line = 0; line <= row; line += 1) {
 				double temp = inverse.data[row][line];
@@ -223,5 +224,5 @@ public final class Matrix {
 				target[row][line] = source[row][line];
 			}
 		}
-    }
+	}
 }

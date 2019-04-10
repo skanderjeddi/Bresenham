@@ -26,7 +26,7 @@ public final class Bresenham extends Game {
 	// General properties
 	public static final String PROCESS_IDENTIFIER = "bresenham";
 	public static final double PER_SECOND_ACTIONS = 60.0;
-	public static final double WIDTH = 250, HEIGHT = 200;
+	public static final double WIDTH = 250, HEIGHT = 250;
 
 	// Window propperties
 	public static final String WINDOW_TITLE = "Bresenham";
@@ -200,7 +200,7 @@ public final class Bresenham extends Game {
 		graphics.setColor(Color.BLACK);
 		graphics.fillRect(Bresenham.ORIGIN_COORD_X, Bresenham.ORIGIN_COORD_X, Bresenham.WINDOW_WIDTH, Bresenham.WINDOW_HEIGHT);
 		// Set worse rendering hints (possibly optional?)
-		this.increaseRenderQuality(graphics);
+		this.decreaseRenderQuality(graphics);
 		// Triangles transform
 		Vector<Triangle> queueVector = new Vector<Triangle>();
 		{
@@ -269,9 +269,9 @@ public final class Bresenham extends Game {
 	 * Draws triangle using the standard Java 2D graphics implementation - fastest
 	 * available
 	 */
-	public void drawTriangle_GRAPHICS_IMPL(Graphics graphics, double px, double py, double sx, double sy, double tx, double ty, Color color) {
+	public void drawTriangle_GRAPHICS_IMPL(Graphics graphics, double firstX, double firstY, double secondX, double secondY, double thirdX, double thirdY, Color color) {
 		graphics.setColor(color);
-		graphics.drawPolygon(new int[] { (int) px, (int) sx, (int) tx }, new int[] { (int) py, (int) sy, (int) ty }, 3);
+		graphics.drawPolygon(new int[] { (int) firstX, (int) secondX, (int) thirdX }, new int[] { (int) firstY, (int) secondY, (int) thirdY }, 3);
 	}
 
 	/**
@@ -285,34 +285,34 @@ public final class Bresenham extends Game {
 	 * Fills triangle using the standard Java 2D graphics implementation - massive
 	 * slow down, to optimize
 	 */
-	public void fillTriangle_GRAPHICS_IMPL(Graphics graphics, double px, double py, double sx, double sy, double tx, double ty, Color color) {
+	public void fillTriangle_GRAPHICS_IMPL(Graphics graphics, double firstX, double firstY, double secondX, double secondY, double thirdX, double thirdY, Color color) {
 		graphics.setColor(color);
-		graphics.fillPolygon(new int[] { (int) px, (int) sx, (int) tx }, new int[] { (int) py, (int) sy, (int) ty }, 3);
+		graphics.fillPolygon(new int[] { (int) firstX, (int) secondX, (int) thirdX }, new int[] { (int) firstY, (int) secondY, (int) thirdY }, 3);
 	}
 
 	/**
 	 * Own algorithm for drawing triangles - slightly slower than system
 	 * implementation (why?) - No helper method because unused
 	 */
-	public void drawTriangle_LINE_BY_LINE(Graphics graphics, double px, double py, double sx, double sy, double tx, double ty, Color color) {
+	public void drawTriangle_LINE_BY_LINE(Graphics graphics, double firstX, double firstY, double secondX, double secondY, double thirdX, double thirdY, Color color) {
 		graphics.setColor(color);
-		graphics.drawLine((int) px, (int) py, (int) sx, (int) sy);
-		graphics.drawLine((int) sx, (int) sy, (int) tx, (int) ty);
-		graphics.drawLine((int) tx, (int) ty, (int) px, (int) py);
+		graphics.drawLine((int) firstX, (int) firstY, (int) secondX, (int) secondY);
+		graphics.drawLine((int) secondX, (int) secondY, (int) thirdX, (int) thirdY);
+		graphics.drawLine((int) thirdY, (int) thirdX, (int) firstX, (int) firstY);
 	}
 
 	/**
 	 * Returns the sum of the initial vertices as a new vertex
 	 */
-	public Vertex add(Vertex vertex_a, Vertex vertex_b) {
-		return new Vertex(vertex_a.x + vertex_b.x, vertex_a.y + vertex_b.y, vertex_a.z + vertex_b.z);
+	public Vertex add(Vertex firstVertex, Vertex secondVertex) {
+		return new Vertex(firstVertex.x + secondVertex.x, firstVertex.y + secondVertex.y, firstVertex.z + secondVertex.z);
 	}
 
 	/**
 	 * Returns the difference of the initial vertices as a new vertex
 	 */
-	public Vertex subtract(Vertex vertex_a, Vertex vertex_b) {
-		return new Vertex(vertex_a.x - vertex_b.x, vertex_a.y - vertex_b.y, vertex_a.z - vertex_b.z);
+	public Vertex subtract(Vertex firstVertex, Vertex secondVertex) {
+		return new Vertex(firstVertex.x - secondVertex.x, firstVertex.y - secondVertex.y, firstVertex.z - secondVertex.z);
 	}
 
 	/**
@@ -332,8 +332,8 @@ public final class Bresenham extends Game {
 	/**
 	 * Returns the dot product of the initial vertices - comparison tool (lighting)
 	 */
-	public double dotProduct(Vertex vertex_a, Vertex vertex_b) {
-		return (vertex_a.x * vertex_b.x) + (vertex_a.y * vertex_b.y) + (vertex_a.z * vertex_b.z);
+	public double dotProduct(Vertex firstVertex, Vertex secondVertex) {
+		return (firstVertex.x * secondVertex.x) + (firstVertex.y * secondVertex.y) + (firstVertex.z * secondVertex.z);
 	}
 
 	/**
@@ -341,10 +341,10 @@ public final class Bresenham extends Game {
 	 * for computing normals - result vertex will be perpendicular to plane created
 	 * by the initial vertices
 	 */
-	public Vertex crossProduct(Vertex vertex_a, Vertex vertex_b) {
-		double x = (vertex_a.y * vertex_b.z) - (vertex_a.z * vertex_b.y);
-		double y = (vertex_a.z * vertex_b.x) - (vertex_a.x * vertex_b.z);
-		double z = (vertex_a.x * vertex_b.y) - (vertex_a.y * vertex_b.x);
+	public Vertex crossProduct(Vertex firstVertex, Vertex secondVertex) {
+		double x = (firstVertex.y * secondVertex.z) - (firstVertex.z * secondVertex.y);
+		double y = (firstVertex.z * secondVertex.x) - (firstVertex.x * secondVertex.z);
+		double z = (firstVertex.x * secondVertex.y) - (firstVertex.y * secondVertex.x);
 		return new Vertex(x, y, z);
 	}
 
