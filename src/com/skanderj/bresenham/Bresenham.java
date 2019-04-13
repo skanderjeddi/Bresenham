@@ -185,7 +185,9 @@ public final class Bresenham extends Game {
 			this.gaze = this.applyMatrixToVector_MPW(this.target, cameraRotationMatrix);
 			this.target = this.add(this.cameraLocation, this.gaze);
 			this.cameraMatrix = this.pointAt(this.cameraLocation, this.target, this.upAxis);
-			this.viewMatrix = this.quickInverse(this.cameraMatrix);
+			// Uses quick inverse - does real inverse work? Is it slower?
+			// this.viewMatrix = this.quickInverse(this.cameraMatrix);
+			this.viewMatrix = this.realInverse(this.cameraMatrix);
 		}
 		// Update keyboard & mouse
 		{
@@ -391,7 +393,7 @@ public final class Bresenham extends Game {
 	 */
 	public Matrix convertTriangleToMatrix(Triangle triangle) {
 		Matrix triangleMat = new Matrix(3, 4);
-		for (int index = 0; index < 3; index += 1) {
+		for (int index = 0; index < Triangle.SIDES; index += 1) {
 			triangleMat.data[index] = this.convertVertexToMatrix(triangle.vectors[index]).data[0];
 		}
 		return triangleMat;
@@ -435,7 +437,7 @@ public final class Bresenham extends Game {
 	 */
 	public Triangle applyMatrixToTriangle_OW(Triangle triangle, Matrix matrix) {
 		Triangle transformedTriangle = new Triangle(triangle);
-		for (int index = 0; index < 3; index += 1) {
+		for (int index = 0; index < Triangle.SIDES; index += 1) {
 			transformedTriangle.vectors[index] = this.applyMatrixToVector_MPW(transformedTriangle.vectors[index], matrix);
 		}
 		return transformedTriangle;
@@ -456,7 +458,7 @@ public final class Bresenham extends Game {
 	 */
 	public Triangle addVertexToTriangle(Triangle triangle, Vertex vertex) {
 		Triangle transformedTriangle = new Triangle(triangle);
-		for (int index = 0; index < 3; index += 1) {
+		for (int index = 0; index < Triangle.SIDES; index += 1) {
 			transformedTriangle.vectors[index] = this.add(transformedTriangle.vectors[index], vertex);
 		}
 		return transformedTriangle;
@@ -469,7 +471,7 @@ public final class Bresenham extends Game {
 	 */
 	public Triangle subtractVertexFromTriangle(Triangle triangle, Vertex vertex) {
 		Triangle transformedTriangle = new Triangle(triangle);
-		for (int index = 0; index < 3; index += 1) {
+		for (int index = 0; index < Triangle.SIDES; index += 1) {
 			transformedTriangle.vectors[index] = this.subtract(transformedTriangle.vectors[index], vertex);
 		}
 		return transformedTriangle;
@@ -480,7 +482,7 @@ public final class Bresenham extends Game {
 	 */
 	public Triangle normalizeTriangle(Triangle triangle) {
 		Triangle transformedTriangle = new Triangle(triangle);
-		for (int index = 0; index < 3; index += 1) {
+		for (int index = 0; index < Triangle.SIDES; index += 1) {
 			transformedTriangle.vectors[index] = this.divide(transformedTriangle.vectors[index], transformedTriangle.vectors[index].w);
 		}
 		return transformedTriangle;
@@ -508,7 +510,7 @@ public final class Bresenham extends Game {
 	 */
 	public Triangle scaleTriangleToView(Triangle triangle) {
 		Triangle transformedTriangle = new Triangle(triangle);
-		for (int index = 0; index < 3; index += 1) {
+		for (int index = 0; index < Triangle.SIDES; index += 1) {
 			this.scaleVertexToView(transformedTriangle.vectors[index]);
 		}
 		return transformedTriangle;

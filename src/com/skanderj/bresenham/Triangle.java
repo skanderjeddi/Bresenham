@@ -1,8 +1,10 @@
-package com.skanderj.bresenham.math;
+package com.skanderj.bresenham;
 
 import java.awt.Color;
 
 public class Triangle implements Comparable<Triangle> {
+	public static final int SIDES = 3;
+	
 	public Vertex vectors[];
 	public Color color;
 
