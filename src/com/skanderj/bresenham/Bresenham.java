@@ -10,7 +10,6 @@ import java.util.Collections;
 import java.util.Vector;
 
 import com.skanderj.bresenham.math.Matrix;
-import com.skanderj.bresenham.math.Triangle;
 import com.skanderj.bresenham.math.Vertex;
 import com.skanderj.gingerbread.Process;
 import com.skanderj.gingerbread.core.Game;
@@ -25,10 +24,10 @@ public final class Bresenham extends Game {
 
 	// General properties
 	public static final String PROCESS_IDENTIFIER = "bresenham";
-	public static final double PER_SECOND_ACTIONS = 60.0;
+	public static final double UPDATES_PER_SECOND = 60.0;
 	public static final double WIDTH = 250, HEIGHT = 250;
 
-	// Window propperties
+	// Window properties
 	public static final String WINDOW_TITLE = "Bresenham";
 	public static final int ORIGIN_COORD_X = 0, ORIGIN_COORD_Y = 0;
 	public static final int SCALE = 3, BUFFER_MODE = 2;
@@ -50,20 +49,20 @@ public final class Bresenham extends Game {
 	private String meshFileName;
 
 	private Bresenham() {
-		super(Bresenham.PROCESS_IDENTIFIER, Bresenham.PER_SECOND_ACTIONS, Bresenham.WINDOW_TITLE, Bresenham.WINDOW_WIDTH, Bresenham.WINDOW_HEIGHT, Bresenham.BUFFER_MODE);
+		super(Bresenham.PROCESS_IDENTIFIER, Bresenham.UPDATES_PER_SECOND, Bresenham.WINDOW_TITLE, Bresenham.WINDOW_WIDTH, Bresenham.WINDOW_HEIGHT, Bresenham.BUFFER_MODE);
 		this.meshFileName = "teapot.obj";
 	}
 
 	@Override
 	protected void create() {
-		// Initialize camera location & lighting
+		// Initialise camera location & lighting
 		{
 			// Camera location as vertex
 			this.cameraLocation = new Vertex(0.0, 0.0, 0.0);
 			// Light direction as negative z axis - "coming towards the player" to allow
 			// lighting
 			this.lightDirection = new Vertex(0.0, 1.0, -1.0);
-			// Normalize light vertex
+			// Normalise light vertex
 			this.lightDirection = this.normalize(this.lightDirection);
 			// Up vertex
 			this.upAxis = new Vertex(0.0, 1.0, 0.0, 1.0);
@@ -74,13 +73,13 @@ public final class Bresenham extends Game {
 			// Yaw
 			this.yaw = 0.0;
 		}
-		// Initialize program matrices
+		// Initialise program matrices
 		{
 			// Projection matrix
 			this.projectionMatrix = this.createProjectionMatrix(Bresenham.FIELD_OF_VIEW_IN_DEGREES, Bresenham.ASPECT_RATIO, Bresenham.NEAR_FIELD, Bresenham.FAR_FIELD);
 			// Translation matrix
 			this.translationMatrix = this.createTranslationMatrix(0.0, 0.0, 8.0);
-			// Initialize rotation angle
+			// Initialise rotation angle
 			this.rotationAngle = 0.0;
 			// Create z axis rotation matrix
 			this.zRotationMatrix = this.createZRotationMatrix(this.rotationAngle);
@@ -202,7 +201,7 @@ public final class Bresenham extends Game {
 		graphics.setColor(Color.BLACK);
 		graphics.fillRect(Bresenham.ORIGIN_COORD_X, Bresenham.ORIGIN_COORD_X, Bresenham.WINDOW_WIDTH, Bresenham.WINDOW_HEIGHT);
 		// Set worse rendering hints (possibly optional?)
-		this.decreaseRenderQuality(graphics);
+		this.increaseRenderQuality(graphics);
 		// Triangles transform
 		Vector<Triangle> queueVector = new Vector<Triangle>();
 		{
@@ -220,14 +219,14 @@ public final class Bresenham extends Game {
 				// Calculate dot product to evaluate if triangle is in view
 				double normalCameraDotProduct = this.dotProduct(normalVertex, cameraRay);
 				if (normalCameraDotProduct < 0.0) {
-					// Set color
+					// Set colour
 					float dotProduct = (float) Math.max(0.1f, this.dotProduct(this.lightDirection, normalVertex));
 					localTriangle.color = new Color(dotProduct, dotProduct, dotProduct);
 					// Transform world space to view space
 					localTriangle = this.applyMatrixToTriangle_NW(localTriangle, this.viewMatrix);
 					// Multiply by protection matrix 3D -> 2D
 					localTriangle = this.applyMatrixToTriangle_NW(localTriangle, this.projectionMatrix);
-					// Normalize
+					// Normalise
 					localTriangle = this.normalizeTriangle(localTriangle);
 					// Scale into view
 					Vertex viewOffset = new Vertex(1.0, 1.0, 0.0);
@@ -285,7 +284,7 @@ public final class Bresenham extends Game {
 
 	/**
 	 * Fills triangle using the standard Java 2D graphics implementation - massive
-	 * slow down, to optimize
+	 * slow down, to optimise
 	 */
 	public void fillTriangle_GRAPHICS_IMPL(Graphics graphics, double firstX, double firstY, double secondX, double secondY, double thirdX, double thirdY, Color color) {
 		graphics.setColor(color);
@@ -351,7 +350,7 @@ public final class Bresenham extends Game {
 	}
 
 	/**
-	 * Returns a normalized version of the initial vertex as a new vertex
+	 * Returns a normalised version of the initial vertex as a new vertex
 	 */
 	public Vertex normalize(Vertex vertex) {
 		double length = this.length(vertex);
@@ -478,7 +477,7 @@ public final class Bresenham extends Game {
 	}
 
 	/**
-	 * Returns a new triangle - normalizes all the vectors of the initial triangle
+	 * Returns a new triangle - normalises all the vectors of the initial triangle
 	 */
 	public Triangle normalizeTriangle(Triangle triangle) {
 		Triangle transformedTriangle = new Triangle(triangle);
@@ -739,7 +738,7 @@ public final class Bresenham extends Game {
 	 */
 	public Matrix realInverse(Matrix matrix) {
 		return Matrix.inverse(matrix);
-	} 
+	}
 
 	/**
 	 * Lowers the rendering quality of the graphics object as much as possible - no
@@ -754,8 +753,8 @@ public final class Bresenham extends Game {
 	}
 
 	/**
-	 * Highers the rendering quality of the graphics object as much as possible - no
-	 * noticeable performance loss
+	 * Increases the rendering quality of the graphics object as much as possible -
+	 * no noticeable performance loss
 	 */
 	public void increaseRenderQuality(Graphics graphics) {
 		Graphics2D graphics2d = (Graphics2D) graphics;

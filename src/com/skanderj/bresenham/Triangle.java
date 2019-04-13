@@ -2,6 +2,8 @@ package com.skanderj.bresenham;
 
 import java.awt.Color;
 
+import com.skanderj.bresenham.math.Vertex;
+
 public class Triangle implements Comparable<Triangle> {
 	public static final int SIDES = 3;
 	
@@ -29,8 +31,9 @@ public class Triangle implements Comparable<Triangle> {
 			return 0;
 		}
 	}
-
-	public void print() {
-		System.out.printf("(%f, %f, %f), (%f, %f, %f), (%f, %f, %f)\n", this.vectors[0].x, this.vectors[0].y, this.vectors[0].z, this.vectors[1].x, this.vectors[1].y, this.vectors[1].z, this.vectors[2].x, this.vectors[2].y, this.vectors[2].z);
+	
+	@Override
+	public String toString() {
+		return String.format("(%f, %f, %f) (%f, %f, %f) (%f, %f, %f)", this.vectors[0].x, this.vectors[0].y, this.vectors[0].z, this.vectors[1].x, this.vectors[1].y, this.vectors[1].z, this.vectors[2].x, this.vectors[2].y, this.vectors[2].z);
 	}
 }

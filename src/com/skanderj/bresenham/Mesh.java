@@ -7,7 +7,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Vector;
 
-import com.skanderj.bresenham.math.Triangle;
 import com.skanderj.bresenham.math.Vertex;
 
 public class Mesh {
