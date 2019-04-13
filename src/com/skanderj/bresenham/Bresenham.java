@@ -31,7 +31,7 @@ public final class Bresenham extends Game {
 	// Window propperties
 	public static final String WINDOW_TITLE = "Bresenham";
 	public static final int ORIGIN_COORD_X = 0, ORIGIN_COORD_Y = 0;
-	public static final int SCALE = 3, BUFFERING_MODE = 2;
+	public static final int SCALE = 3, BUFFER_MODE = 2;
 	public static final int WINDOW_WIDTH = (int) (Bresenham.WIDTH * Bresenham.SCALE), WINDOW_HEIGHT = (int) (Bresenham.HEIGHT * Bresenham.SCALE);
 
 	// 3D properties
@@ -50,7 +50,7 @@ public final class Bresenham extends Game {
 	private String meshFileName;
 
 	private Bresenham() {
-		super(Bresenham.PROCESS_IDENTIFIER, Bresenham.PER_SECOND_ACTIONS, Bresenham.WINDOW_TITLE, Bresenham.WINDOW_WIDTH, Bresenham.WINDOW_HEIGHT, Bresenham.BUFFERING_MODE);
+		super(Bresenham.PROCESS_IDENTIFIER, Bresenham.PER_SECOND_ACTIONS, Bresenham.WINDOW_TITLE, Bresenham.WINDOW_WIDTH, Bresenham.WINDOW_HEIGHT, Bresenham.BUFFER_MODE);
 		this.meshFileName = "teapot.obj";
 	}
 
@@ -731,6 +731,13 @@ public final class Bresenham extends Game {
 		}
 		return resultMatrix;
 	}
+
+	/**
+	 * Real inverse of any n-by-n matrix
+	 */
+	public Matrix realInverse(Matrix matrix) {
+		return Matrix.inverse(matrix);
+	} 
 
 	/**
 	 * Lowers the rendering quality of the graphics object as much as possible - no
