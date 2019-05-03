@@ -63,7 +63,7 @@ public final class Bresenham extends Game {
 			// lighting
 			this.lightDirection = new Vertex(0.0, 1.0, -1.0);
 			// Normalise light vertex
-			this.lightDirection = this.normalize(this.lightDirection);
+			this.lightDirection = Vertex.normalize(this.lightDirection);
 			// Up vertex
 			this.upAxis = new Vertex(0.0, 1.0, 0.0, 1.0);
 			// Gaze
@@ -140,7 +140,7 @@ public final class Bresenham extends Game {
 					this.cameraLocation.x -= 0.5 * delta;
 				}
 			}
-			Vertex scaledDirection = this.multiply(this.gaze, 0.5 * delta);
+			Vertex scaledDirection = Vertex.multiply(this.gaze, 0.5 * delta);
 			// Handle camera rotation
 			{
 				// Turn left
@@ -153,11 +153,11 @@ public final class Bresenham extends Game {
 				}
 				// Go forward
 				if (zKeyHeld) {
-					this.cameraLocation = this.subtract(this.cameraLocation, scaledDirection);
+					this.cameraLocation = Vertex.subtract(this.cameraLocation, scaledDirection);
 				}
 				// Go backwards
 				if (sKeyHeld) {
-					this.cameraLocation = this.add(this.cameraLocation, scaledDirection);
+					this.cameraLocation = Vertex.add(this.cameraLocation, scaledDirection);
 				}
 			}
 		}
@@ -181,8 +181,8 @@ public final class Bresenham extends Game {
 		{
 			this.target = new Vertex(0.0, 0.0, 1.0);
 			Matrix cameraRotationMatrix = this.createYRotationMatrix(this.yaw);
-			this.gaze = this.applyMatrixToVector_MPW(this.target, cameraRotationMatrix);
-			this.target = this.add(this.cameraLocation, this.gaze);
+			this.gaze = Vertex.applyMatrixToVector_MPW(this.target, cameraRotationMatrix);
+			this.target = Vertex.add(this.cameraLocation, this.gaze);
 			this.cameraMatrix = this.pointAt(this.cameraLocation, this.target, this.upAxis);
 			// Uses quick inverse - does real inverse work? Is it slower?
 			// this.viewMatrix = this.quickInverse(this.cameraMatrix);
@@ -210,28 +210,28 @@ public final class Bresenham extends Game {
 				// Copy data from current triangle - we don't want to change the original data!
 				Triangle localTriangle = new Triangle(triangle);
 				// Transform localTriangle
-				localTriangle = this.applyMatrixToTriangle_NW(localTriangle, this.worldMatrix);
+				localTriangle = Triangle.applyMatrixToTriangle_NW(localTriangle, this.worldMatrix);
 				// Calculate normal data
-				Vertex normalVertex = this.normalToTriangle(localTriangle);
-				normalVertex = this.normalize(normalVertex);
+				Vertex normalVertex = Vertex.normalToTriangle(localTriangle);
+				normalVertex = Vertex.normalize(normalVertex);
 				// Calculate camera ray
-				Vertex cameraRay = this.subtract(localTriangle.vectors[0], this.cameraLocation);
+				Vertex cameraRay = Vertex.subtract(localTriangle.vertices[0], this.cameraLocation);
 				// Calculate dot product to evaluate if triangle is in view
-				double normalCameraDotProduct = this.dotProduct(normalVertex, cameraRay);
+				double normalCameraDotProduct = Vertex.dotProduct(normalVertex, cameraRay);
 				if (normalCameraDotProduct < 0.0) {
 					// Set colour
-					float dotProduct = (float) Math.max(0.1f, this.dotProduct(this.lightDirection, normalVertex));
+					float dotProduct = (float) Math.max(0.1f, Vertex.dotProduct(this.lightDirection, normalVertex));
 					localTriangle.color = new Color(dotProduct, dotProduct, dotProduct);
 					// Transform world space to view space
-					localTriangle = this.applyMatrixToTriangle_NW(localTriangle, this.viewMatrix);
+					localTriangle = Triangle.applyMatrixToTriangle_NW(localTriangle, this.viewMatrix);
 					// Multiply by protection matrix 3D -> 2D
-					localTriangle = this.applyMatrixToTriangle_NW(localTriangle, this.projectionMatrix);
+					localTriangle = Triangle.applyMatrixToTriangle_NW(localTriangle, this.projectionMatrix);
 					// Normalise
-					localTriangle = this.normalizeTriangle(localTriangle);
+					localTriangle = Triangle.normalizeTriangle(localTriangle);
 					// Scale into view
 					Vertex viewOffset = new Vertex(1.0, 1.0, 0.0);
-					localTriangle = this.addVertexToTriangle(localTriangle, viewOffset);
-					localTriangle = this.scaleTriangleToView(localTriangle);
+					localTriangle = Triangle.addVertexToTriangle(localTriangle, viewOffset);
+					localTriangle = Triangle.scaleTriangleToView(localTriangle);
 					// Add to vector
 					queueVector.add(localTriangle);
 				}
@@ -263,7 +263,7 @@ public final class Bresenham extends Game {
 	 * Draws triangle - helper function
 	 */
 	public void drawTriangle_GRAPHICS_IMPL(Graphics graphics, Triangle triangle) {
-		this.drawTriangle_GRAPHICS_IMPL(graphics, triangle.vectors[0].x, triangle.vectors[0].y, triangle.vectors[1].x, triangle.vectors[1].y, triangle.vectors[2].x, triangle.vectors[2].y, triangle.color);
+		this.drawTriangle_GRAPHICS_IMPL(graphics, triangle.vertices[0].x, triangle.vertices[0].y, triangle.vertices[1].x, triangle.vertices[1].y, triangle.vertices[2].x, triangle.vertices[2].y, triangle.color);
 	}
 
 	/**
@@ -279,7 +279,7 @@ public final class Bresenham extends Game {
 	 * Fills triangle - helper function
 	 */
 	public void fillTriangle_GRAPHICS_IMPL(Graphics graphics, Triangle triangle) {
-		this.fillTriangle_GRAPHICS_IMPL(graphics, triangle.vectors[0].x, triangle.vectors[0].y, triangle.vectors[1].x, triangle.vectors[1].y, triangle.vectors[2].x, triangle.vectors[2].y, triangle.color);
+		this.fillTriangle_GRAPHICS_IMPL(graphics, triangle.vertices[0].x, triangle.vertices[0].y, triangle.vertices[1].x, triangle.vertices[1].y, triangle.vertices[2].x, triangle.vertices[2].y, triangle.color);
 	}
 
 	/**
@@ -303,246 +303,19 @@ public final class Bresenham extends Game {
 	}
 
 	/**
-	 * Returns the sum of the initial vertices as a new vertex
-	 */
-	public Vertex add(Vertex firstVertex, Vertex secondVertex) {
-		return new Vertex(firstVertex.x + secondVertex.x, firstVertex.y + secondVertex.y, firstVertex.z + secondVertex.z);
-	}
-
-	/**
-	 * Returns the difference of the initial vertices as a new vertex
-	 */
-	public Vertex subtract(Vertex firstVertex, Vertex secondVertex) {
-		return new Vertex(firstVertex.x - secondVertex.x, firstVertex.y - secondVertex.y, firstVertex.z - secondVertex.z);
-	}
-
-	/**
-	 * Returns initial vertex scaled up by k-factor as a new vertex
-	 */
-	public Vertex multiply(Vertex vertex, double k) {
-		return new Vertex(vertex.x * k, vertex.y * k, vertex.z * k);
-	}
-
-	/**
-	 * Returns initial vertex scaled down by k-factor as a new vertex
-	 */
-	public Vertex divide(Vertex vertex, double k) {
-		return new Vertex(vertex.x / k, vertex.y / k, vertex.z / k);
-	}
-
-	/**
-	 * Returns the dot product of the initial vertices - comparison tool (lighting)
-	 */
-	public double dotProduct(Vertex firstVertex, Vertex secondVertex) {
-		return (firstVertex.x * secondVertex.x) + (firstVertex.y * secondVertex.y) + (firstVertex.z * secondVertex.z);
-	}
-
-	/**
-	 * Returns the cross product of the initial vertices as a new vertex - useful
-	 * for computing normals - result vertex will be perpendicular to plane created
-	 * by the initial vertices
-	 */
-	public Vertex crossProduct(Vertex firstVertex, Vertex secondVertex) {
-		double x = (firstVertex.y * secondVertex.z) - (firstVertex.z * secondVertex.y);
-		double y = (firstVertex.z * secondVertex.x) - (firstVertex.x * secondVertex.z);
-		double z = (firstVertex.x * secondVertex.y) - (firstVertex.y * secondVertex.x);
-		return new Vertex(x, y, z);
-	}
-
-	/**
-	 * Returns a normalised version of the initial vertex as a new vertex
-	 */
-	public Vertex normalize(Vertex vertex) {
-		double length = this.length(vertex);
-		return new Vertex(vertex.x / length, vertex.y / length, vertex.z / length);
-	}
-
-	/**
-	 * Returns the length of the vertex
-	 */
-	public double length(Vertex vertex) {
-		return Math.sqrt((vertex.x * vertex.x) + (vertex.y * vertex.y) + (vertex.z * vertex.z));
-	}
-
-	/**
-	 * Converts a vertex to a 1-by-4 matrix
-	 */
-	public Matrix convertVertexToMatrix(Vertex vertex) {
-		Matrix vectMat = new Matrix(1, 4);
-		vectMat.data[0][0] = vertex.x;
-		vectMat.data[0][1] = vertex.y;
-		vectMat.data[0][2] = vertex.z;
-		vectMat.data[0][3] = vertex.w;
-		return vectMat;
-	}
-
-	/**
-	 * Converts a 1-by-4 matrix to a vertex - need to check size
-	 */
-	public Vertex convertMatrixToVertex(Matrix matrix) {
-		double x = matrix.data[0][0];
-		double y = matrix.data[0][1];
-		double z = matrix.data[0][2];
-		double w = matrix.data[0][3];
-		return new Vertex(x, y, z, w);
-	}
-
-	/**
-	 * Converts a triangle to a 3-by-4 matrix
-	 */
-	public Matrix convertTriangleToMatrix(Triangle triangle) {
-		Matrix triangleMat = new Matrix(3, 4);
-		for (int index = 0; index < Triangle.SIDES; index += 1) {
-			triangleMat.data[index] = this.convertVertexToMatrix(triangle.vectors[index]).data[0];
-		}
-		return triangleMat;
-	}
-
-	/**
-	 * Converts a 3-by-4 matrix to a triangle - need to check size
-	 */
-	public Triangle convertMatrixToTriangle(Matrix matrix, Color color) {
-		Vertex firstVertex = new Vertex(matrix.data[0][0], matrix.data[0][1], matrix.data[0][2], matrix.data[0][3]);
-		Vertex secondVertex = new Vertex(matrix.data[1][0], matrix.data[1][1], matrix.data[1][2], matrix.data[1][3]);
-		Vertex thirdVertex = new Vertex(matrix.data[2][0], matrix.data[2][1], matrix.data[2][2], matrix.data[2][3]);
-		return new Triangle(firstVertex, secondVertex, thirdVertex, color);
-	}
-
-	/**
-	 * Returns the 1-by-4 * 4-by-4 matrices product as a new vertex - initial vertex
-	 * is considered a 1-by-4 matrix - this implementation is messy and could be
-	 * refactored to use matrix-matrix multiplication
-	 */
-	public Vertex applyMatrixToVector_PW(Vertex vertex, Matrix matrix) {
-		double x = (vertex.x * matrix.data[0][0]) + (vertex.y * matrix.data[1][0]) + (vertex.z * matrix.data[2][0]) + (vertex.w * matrix.data[3][0]);
-		double y = (vertex.x * matrix.data[0][1]) + (vertex.y * matrix.data[1][1]) + (vertex.z * matrix.data[2][1]) + (vertex.w * matrix.data[3][1]);
-		double z = (vertex.x * matrix.data[0][2]) + (vertex.y * matrix.data[1][2]) + (vertex.z * matrix.data[2][2]) + (vertex.w * matrix.data[3][2]);
-		double w = (vertex.x * matrix.data[0][3]) + (vertex.y * matrix.data[1][3]) + (vertex.z * matrix.data[2][3]) + (vertex.w * matrix.data[3][3]);
-		return new Vertex(x, y, z, w);
-	}
-
-	/**
-	 * See note above - refactoring of the function to use matrices product
-	 */
-	public Vertex applyMatrixToVector_MPW(Vertex vertex, Matrix matrix) {
-		Matrix vectMat = this.convertVertexToMatrix(vertex);
-		Matrix productMat = Matrix.multiply(vectMat, matrix);
-		return this.convertMatrixToVertex(productMat);
-	}
-
-	/**
-	 * Returns the transformed-by-matrix triangle - this implementation is messy and
-	 * could be refactored to use matrix-matrix multiplication
-	 */
-	public Triangle applyMatrixToTriangle_OW(Triangle triangle, Matrix matrix) {
-		Triangle transformedTriangle = new Triangle(triangle);
-		for (int index = 0; index < Triangle.SIDES; index += 1) {
-			transformedTriangle.vectors[index] = this.applyMatrixToVector_MPW(transformedTriangle.vectors[index], matrix);
-		}
-		return transformedTriangle;
-	}
-
-	/**
-	 * See note above - refactoring of the function to use matrices product
-	 */
-	public Triangle applyMatrixToTriangle_NW(Triangle triangle, Matrix matrix) {
-		Matrix triangleMatrix = this.convertTriangleToMatrix(triangle);
-		Matrix resultMatrix = Matrix.multiply(triangleMatrix, matrix);
-		return this.convertMatrixToTriangle(resultMatrix, triangle.color);
-	}
-
-	/**
-	 * Returns a new triangle - sum of the initial triangle's vertices coordinates &
-	 * the initial vertex - this implementation is messy and could be refactored
-	 */
-	public Triangle addVertexToTriangle(Triangle triangle, Vertex vertex) {
-		Triangle transformedTriangle = new Triangle(triangle);
-		for (int index = 0; index < Triangle.SIDES; index += 1) {
-			transformedTriangle.vectors[index] = this.add(transformedTriangle.vectors[index], vertex);
-		}
-		return transformedTriangle;
-	}
-
-	/**
-	 * Returns a new triangle - difference of the initial triangle's vertices
-	 * coordinates & the initial vertex - this implementation is messy and could be
-	 * refactored
-	 */
-	public Triangle subtractVertexFromTriangle(Triangle triangle, Vertex vertex) {
-		Triangle transformedTriangle = new Triangle(triangle);
-		for (int index = 0; index < Triangle.SIDES; index += 1) {
-			transformedTriangle.vectors[index] = this.subtract(transformedTriangle.vectors[index], vertex);
-		}
-		return transformedTriangle;
-	}
-
-	/**
-	 * Returns a new triangle - normalises all the vectors of the initial triangle
-	 */
-	public Triangle normalizeTriangle(Triangle triangle) {
-		Triangle transformedTriangle = new Triangle(triangle);
-		for (int index = 0; index < Triangle.SIDES; index += 1) {
-			transformedTriangle.vectors[index] = this.divide(transformedTriangle.vectors[index], transformedTriangle.vectors[index].w);
-		}
-		return transformedTriangle;
-	}
-
-	/**
-	 * Returns the normal vertex to a triangle
-	 */
-	public Vertex normalToTriangle(Triangle triangle) {
-		Vertex firstAxis = this.subtract(triangle.vectors[1], triangle.vectors[0]);
-		Vertex secondAxis = this.subtract(triangle.vectors[2], triangle.vectors[0]);
-		return this.crossProduct(firstAxis, secondAxis);
-	}
-
-	/**
-	 * Scales a vertex to viewing distance
-	 */
-	public Vertex scaleVertexToView(Vertex vertex) {
-		Vertex scaledVertex = new Vertex(vertex.x * Bresenham.HORIZONTAL_SCALING_FACTOR, vertex.y * Bresenham.VERTICAL_SCALING_FACTOR, vertex.z);
-		return scaledVertex;
-	}
-
-	/**
-	 * Scales a triangle to viewing distance
-	 */
-	public Triangle scaleTriangleToView(Triangle triangle) {
-		Triangle transformedTriangle = new Triangle(triangle);
-		for (int index = 0; index < Triangle.SIDES; index += 1) {
-			this.scaleVertexToView(transformedTriangle.vectors[index]);
-		}
-		return transformedTriangle;
-	}
-
-	/**
 	 * Returns shortest distance from point to plane, plane normal must be
 	 * normalised
 	 */
 	public double distancePointToPlane(Vertex planePoint, Vertex planeNormal, Vertex target) {
-		target = this.normalize(target);
-		return (((planeNormal.x * target.x) + (planeNormal.y * target.y) + (planeNormal.z * target.z)) - this.dotProduct(planeNormal, planePoint));
-	}
-
-	/**
-	 * Returns the intersection of a plane and a vertex
-	 */
-	public Vertex vertexPlaneIntersection(Vertex planePoint, Vertex planeNormal, Vertex lineStart, Vertex lineEnd) {
-		planeNormal = this.normalize(planeNormal);
-		double planeDotProduct = -this.dotProduct(planeNormal, planePoint);
-		double firstEnd = this.dotProduct(lineStart, planeNormal);
-		double secondEnd = this.dotProduct(lineEnd, planeNormal);
-		double tangent = (-planeDotProduct - firstEnd) / (secondEnd - firstEnd);
-		Vertex line = this.subtract(lineEnd, lineStart);
-		Vertex lineToIntersect = this.multiply(line, tangent);
-		return this.add(lineStart, lineToIntersect);
+		target = Vertex.normalize(target);
+		return (((planeNormal.x * target.x) + (planeNormal.y * target.y) + (planeNormal.z * target.z)) - Vertex.dotProduct(planeNormal, planePoint));
 	}
 
 	/**
 	 *
 	 */
 	public int clipAgainstPlane(Vertex planePoint, Vertex planeNormal, Triangle input, Triangle firstOutput, Triangle secondOutput) {
-		planeNormal = this.normalize(planeNormal);
+		planeNormal = Vertex.normalize(planeNormal);
 		return -1;
 	}
 
@@ -669,12 +442,12 @@ public final class Bresenham extends Game {
 	public Matrix pointAt(Vertex position, Vertex target, Vertex reference) {
 		Matrix resultMatrix = new Matrix(4, 4);
 		// Calculate new forward direction relative to position
-		Vertex forwardP = this.normalize(this.subtract(target, position));
+		Vertex forwardP = Vertex.normalize(Vertex.subtract(target, position));
 		// Calculate new up direction relative to new forward
-		Vertex scaleF = this.multiply(forwardP, this.dotProduct(reference, forwardP));
-		Vertex upP = this.normalize(this.subtract(reference, scaleF));
+		Vertex scaleF = Vertex.multiply(forwardP, Vertex.dotProduct(reference, forwardP));
+		Vertex upP = Vertex.normalize(Vertex.subtract(reference, scaleF));
 		// Calculate new right as cross product of forward & up
-		Vertex rightP = this.crossProduct(upP, forwardP);
+		Vertex rightP = Vertex.crossProduct(upP, forwardP);
 		// Construct "point-at" matrix
 		{
 			// First row

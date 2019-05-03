@@ -2,6 +2,8 @@ package com.skanderj.bresenham.math;
 
 import java.util.Random;
 
+import com.skanderj.bresenham.Triangle;
+
 public final class Matrix {
 	private final int rows, lines;
 	public final double[][] data;
@@ -13,11 +15,11 @@ public final class Matrix {
 	 * @return [I(n)]
 	 */
 	public static final Matrix identity(int size) {
-		Matrix idmat = new Matrix(size, size);
+		Matrix identityMatrix = new Matrix(size, size);
 		for (int cursor = 0; cursor < size; cursor += 1) {
-			idmat.data[cursor][cursor] = 1;
+			identityMatrix.data[cursor][cursor] = 1;
 		}
-		return idmat;
+		return identityMatrix;
 	}
 
 	/**
@@ -45,7 +47,7 @@ public final class Matrix {
 		this.data = new double[this.rows][this.lines];
 		for (int row = 0; row < this.rows; row += 1) {
 			for (int line = 0; line < this.lines; line += 1) {
-				this.data[row][line] = 0f;
+				this.data[row][line] = 0;
 			}
 		}
 	}
@@ -65,14 +67,14 @@ public final class Matrix {
 	 * @param scalar
 	 * @return k * [M]
 	 */
-	public static final Matrix multiply(Matrix matrix, double k) {
-		Matrix resmat = new Matrix(matrix);
+	public static final Matrix scale(Matrix matrix, double k) {
+		Matrix resultMatrix = new Matrix(matrix);
 		for (int row = 0; row < matrix.rows; row += 1) {
 			for (int line = 0; line < matrix.lines; line += 1) {
-				resmat.data[row][line] *= k;
+				resultMatrix.data[row][line] *= k;
 			}
 		}
-		return resmat;
+		return resultMatrix;
 	}
 
 	/**
@@ -82,13 +84,13 @@ public final class Matrix {
 	 * @return [A] + [B]
 	 */
 	public static final Matrix add(Matrix firstMat, Matrix secondMatrix) {
-		Matrix resmat = new Matrix(firstMat);
+		Matrix resultMatrix = new Matrix(firstMat);
 		for (int row = 0; row < firstMat.rows; row += 1) {
 			for (int line = 0; line < firstMat.lines; line += 1) {
-				resmat.data[row][line] += secondMatrix.data[row][line];
+				resultMatrix.data[row][line] += secondMatrix.data[row][line];
 			}
 		}
-		return resmat;
+		return resultMatrix;
 	}
 
 	/**
@@ -97,8 +99,14 @@ public final class Matrix {
 	 * @param mat
 	 * @return [A] - [B]
 	 */
-	public static final Matrix subtract(Matrix firstMatrix, Matrix secondMatrix) {
-		return Matrix.add(firstMatrix, Matrix.multiply(secondMatrix, -1));
+	public static final Matrix subtract(Matrix firstMat, Matrix secondMatrix) {
+		Matrix resultMatrix = new Matrix(firstMat);
+		for (int row = 0; row < firstMat.rows; row += 1) {
+			for (int line = 0; line < firstMat.lines; line += 1) {
+				resultMatrix.data[row][line] -= secondMatrix.data[row][line];
+			}
+		}
+		return resultMatrix;
 	}
 
 	/**
@@ -109,29 +117,29 @@ public final class Matrix {
 	 * @return [A] * [B]
 	 */
 	public static final Matrix multiply(Matrix firstMatrix, Matrix secondMatrix) {
-		Matrix resmat;
+		Matrix resultMatrix;
 		if (firstMatrix.lines == secondMatrix.rows) {
-			resmat = new Matrix(firstMatrix.rows, secondMatrix.lines);
-			for (int row = 0; row < resmat.rows; row += 1) {
-				for (int line = 0; line < resmat.lines; line += 1) {
+			resultMatrix = new Matrix(firstMatrix.rows, secondMatrix.lines);
+			for (int row = 0; row < resultMatrix.rows; row += 1) {
+				for (int line = 0; line < resultMatrix.lines; line += 1) {
 					for (int cursor = 0; cursor < firstMatrix.lines; cursor += 1) {
-						resmat.data[row][line] += (firstMatrix.data[row][cursor] * secondMatrix.data[cursor][line]);
+						resultMatrix.data[row][line] += (firstMatrix.data[row][cursor] * secondMatrix.data[cursor][line]);
 					}
 				}
 			}
 		} else if (secondMatrix.lines == firstMatrix.rows) {
-			resmat = new Matrix(secondMatrix.rows, firstMatrix.lines);
-			for (int row = 0; row < resmat.rows; row += 1) {
-				for (int line = 0; line < resmat.lines; line += 1) {
+			resultMatrix = new Matrix(secondMatrix.rows, firstMatrix.lines);
+			for (int row = 0; row < resultMatrix.rows; row += 1) {
+				for (int line = 0; line < resultMatrix.lines; line += 1) {
 					for (int cursor = 0; cursor < secondMatrix.lines; cursor += 1) {
-						resmat.data[row][line] += (secondMatrix.data[row][cursor] * firstMatrix.data[cursor][line]);
+						resultMatrix.data[row][line] += (secondMatrix.data[row][cursor] * firstMatrix.data[cursor][line]);
 					}
 				}
 			}
 		} else {
 			return null;
 		}
-		return resmat;
+		return resultMatrix;
 	}
 
 	/**
@@ -140,13 +148,13 @@ public final class Matrix {
 	 * @return t[A]
 	 */
 	public static final Matrix transpose(Matrix matrix) {
-		Matrix resmat = new Matrix(matrix.lines, matrix.rows);
+		Matrix resultMatrix = new Matrix(matrix.lines, matrix.rows);
 		for (int row = 0; row < matrix.rows; row += 1) {
 			for (int line = 0; line < matrix.lines; line += 1) {
-				resmat.data[line][row] = matrix.data[row][line];
+				resultMatrix.data[line][row] = matrix.data[row][line];
 			}
 		}
-		return resmat;
+		return resultMatrix;
 	}
 
 	/**
@@ -202,7 +210,31 @@ public final class Matrix {
 		return inverse;
 	}
 
-	public final void print() {
+	/**
+	 * Converts a vertex to a 1-by-4 matrix
+	 */
+	public static Matrix convertVertexToMatrix(Vertex vertex) {
+		Matrix vectMat = new Matrix(1, 4);
+		vectMat.data[0][0] = vertex.x;
+		vectMat.data[0][1] = vertex.y;
+		vectMat.data[0][2] = vertex.z;
+		vectMat.data[0][3] = vertex.w;
+		return vectMat;
+	}
+
+	/**
+	 * Converts a triangle to a 3-by-4 matrix
+	 */
+	public static Matrix convertTriangleToMatrix(Triangle triangle) {
+		Matrix triangleMat = new Matrix(3, 4);
+		for (int index = 0; index < Triangle.SIDES; index += 1) {
+			triangleMat.data[index] = Matrix.convertVertexToMatrix(triangle.vertices[index]).data[0];
+		}
+		return triangleMat;
+	}
+
+	public final void print(String title, boolean newLine) {
+		System.out.printf("Printing matrix: %s\n", title);
 		for (int row = 0; row < this.rows; row += 1) {
 			for (int line = 0; line < this.lines; line += 1) {
 				if (line == 0) {
@@ -215,6 +247,9 @@ public final class Matrix {
 					System.out.print("\t");
 				}
 			}
+		}
+		if (newLine) {
+			System.out.println();
 		}
 	}
 
