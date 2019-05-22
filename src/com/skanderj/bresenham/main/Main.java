@@ -8,7 +8,7 @@ public final class Main {
 	}
 
 	public static void main(String[] args) {
-		Bresenham instance = Bresenham.getInstance();
-		instance.start();
+		Bresenham bresenham = Bresenham.getInstance();
+		bresenham.start();
 	}
 }

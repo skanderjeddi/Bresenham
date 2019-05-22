@@ -3,6 +3,8 @@ package com.skanderj.bresenham.math;
 import java.util.Random;
 
 import com.skanderj.bresenham.Triangle;
+import com.skanderj.bresenham.time.Watch;
+import com.skanderj.bresenham.time.Watch.WatchMode;
 
 public final class Matrix {
 	private final int rows, lines;
@@ -32,13 +34,13 @@ public final class Matrix {
 	 */
 	public static final Matrix random(int rows, int lines, int magnitude) {
 		Random random = new Random();
-		Matrix randommat = new Matrix(rows, lines);
+		Matrix randomMatrix = new Matrix(rows, lines);
 		for (int row = 0; row < rows; row += 1) {
 			for (int line = 0; line < lines; line += 1) {
-				randommat.data[row][line] = random.nextFloat() * magnitude;
+				randomMatrix.data[row][line] = random.nextFloat() * magnitude;
 			}
 		}
-		return randommat;
+		return randomMatrix;
 	}
 
 	public Matrix(int rows, int lines) {
@@ -202,35 +204,35 @@ public final class Matrix {
 		double determinant = 1.0 / Matrix.determinant(matrix);
 		for (int row = 0; row < inverse.rows; row += 1) {
 			for (int line = 0; line <= row; line += 1) {
-				double temp = inverse.data[row][line];
+				double storedValue = inverse.data[row][line];
 				inverse.data[row][line] = inverse.data[line][row] * determinant;
-				inverse.data[line][row] = temp * determinant;
+				inverse.data[line][row] = storedValue * determinant;
 			}
 		}
 		return inverse;
 	}
 
 	/**
-	 * Converts a vertex to a 1-by-4 matrix
+	 * Converts a vector to a 1-by-4 matrix
 	 */
-	public static Matrix convertVertexToMatrix(Vertex vertex) {
-		Matrix vectMat = new Matrix(1, 4);
-		vectMat.data[0][0] = vertex.x;
-		vectMat.data[0][1] = vertex.y;
-		vectMat.data[0][2] = vertex.z;
-		vectMat.data[0][3] = vertex.w;
-		return vectMat;
+	public static Matrix convertVectorToMatrix(Vector4D vector) {
+		Matrix vectorMatrix = new Matrix(1, 4);
+		vectorMatrix.data[0][0] = vector.x;
+		vectorMatrix.data[0][1] = vector.y;
+		vectorMatrix.data[0][2] = vector.z;
+		vectorMatrix.data[0][3] = vector.w;
+		return vectorMatrix;
 	}
 
 	/**
 	 * Converts a triangle to a 3-by-4 matrix
 	 */
 	public static Matrix convertTriangleToMatrix(Triangle triangle) {
-		Matrix triangleMat = new Matrix(3, 4);
+		Matrix triangleMatrix = new Matrix(3, 4);
 		for (int index = 0; index < Triangle.SIDES; index += 1) {
-			triangleMat.data[index] = Matrix.convertVertexToMatrix(triangle.vertices[index]).data[0];
+			triangleMatrix.data[index] = Matrix.convertVectorToMatrix(triangle.vectors[index]).data[0];
 		}
-		return triangleMat;
+		return triangleMatrix;
 	}
 
 	public final void print(String title, boolean newLine) {
@@ -259,5 +261,16 @@ public final class Matrix {
 				target[row][line] = source[row][line];
 			}
 		}
+	}
+	
+	public static void main(String[] args) {
+		Matrix matrix = Matrix.random(12, 12, 10);
+		matrix.print("Random matrix", false);
+		Watch watch = new Watch(WatchMode.MILLIS);
+		watch.begin();
+		Matrix inverse = Matrix.inverse(matrix);
+		watch.end();
+		System.out.println("Took " + watch.getElapsedTime() + "ms.");
+		inverse.print("Inverse", false);
 	}
 }

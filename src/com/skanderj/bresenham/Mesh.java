@@ -7,7 +7,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Vector;
 
-import com.skanderj.bresenham.math.Vertex;
+import com.skanderj.bresenham.math.Vector4D;
 
 public class Mesh {
 	/**
@@ -19,7 +19,7 @@ public class Mesh {
 	 * @throws IOException
 	 */
 	public static final Mesh loadFromFile(String objName) throws NumberFormatException, IOException {
-		Vector<Vertex> vectors = new Vector<Vertex>();
+		Vector<Vector4D> vectors = new Vector<Vector4D>();
 		Vector<Triangle> triangles = new Vector<Triangle>();
 		File objFile = new File(objName);
 		BufferedReader bufferedReader = new BufferedReader(new FileReader(objFile));
@@ -32,7 +32,7 @@ public class Mesh {
 				double x = Double.valueOf(parts[1]);
 				double y = Double.valueOf(parts[2]);
 				double z = Double.valueOf(parts[3]);
-				Vertex vector = new Vertex(x, y, z);
+				Vector4D vector = new Vector4D(x, y, z);
 				vectors.add(vector);
 			} else if (line.startsWith("f")) {
 				int[] indices = new int[3];

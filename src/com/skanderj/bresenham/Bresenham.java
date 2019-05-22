@@ -10,11 +10,11 @@ import java.util.Collections;
 import java.util.Vector;
 
 import com.skanderj.bresenham.math.Matrix;
-import com.skanderj.bresenham.math.Vertex;
-import com.skanderj.gingerbread.Process;
-import com.skanderj.gingerbread.core.Game;
+import com.skanderj.bresenham.math.Vector4D;
+import com.skanderj.gingerbread.SimpleThread;
+import com.skanderj.gingerbread.core.Process;
 
-public final class Bresenham extends Game {
+public final class Bresenham extends Process {
 	// Singleton model
 	private static Bresenham instance;
 
@@ -41,8 +41,8 @@ public final class Bresenham extends Game {
 	private Matrix projectionMatrix, translationMatrix, zRotationMatrix, xRotationMatrix, worldMatrix, cameraMatrix, viewMatrix;
 	private double rotationAngle;
 
-	// Individual vertices
-	private Vertex cameraLocation, lightDirection, upAxis, gaze, target;
+	// Individual vectors
+	private Vector4D cameraLocation, lightDirection, upAxis, gaze, target;
 	private double yaw;
 
 	private Mesh mainMesh;
@@ -57,19 +57,19 @@ public final class Bresenham extends Game {
 	protected void create() {
 		// Initialise camera location & lighting
 		{
-			// Camera location as vertex
-			this.cameraLocation = new Vertex(0.0, 0.0, 0.0);
+			// Camera location as vector
+			this.cameraLocation = new Vector4D(0.0, 0.0, 0.0);
 			// Light direction as negative z axis - "coming towards the player" to allow
 			// lighting
-			this.lightDirection = new Vertex(0.0, 1.0, -1.0);
-			// Normalise light vertex
-			this.lightDirection = Vertex.normalize(this.lightDirection);
-			// Up vertex
-			this.upAxis = new Vertex(0.0, 1.0, 0.0, 1.0);
+			this.lightDirection = new Vector4D(0.0, 1.0, -1.0);
+			// Normalise light vector
+			this.lightDirection = Vector4D.normalize(this.lightDirection);
+			// Up vector
+			this.upAxis = new Vector4D(0.0, 1.0, 0.0, 1.0);
 			// Gaze
-			this.gaze = new Vertex(0.0, 0.0, 1.0);
+			this.gaze = new Vector4D(0.0, 0.0, 1.0);
 			// Target
-			this.target = new Vertex(0.0, 0.0, 1.0);
+			this.target = new Vector4D(0.0, 0.0, 1.0);
 			// Yaw
 			this.yaw = 0.0;
 		}
@@ -97,7 +97,7 @@ public final class Bresenham extends Game {
 		} catch (NumberFormatException | IOException exception) {
 			exception.printStackTrace();
 			// Can't load mesh so exit
-			System.exit(Process.EXIT_FAILURE);
+			System.exit(SimpleThread.EXIT_FAILURE);
 		}
 		super.create();
 	}
@@ -105,7 +105,7 @@ public final class Bresenham extends Game {
 	@Override
 	protected void destroy() {
 		super.destroy();
-		System.exit(Process.EXIT_SUCCESS);
+		System.exit(SimpleThread.EXIT_SUCCESS);
 	}
 
 	@Override
@@ -128,41 +128,43 @@ public final class Bresenham extends Game {
 			// Move camera
 			{
 				if (upKeyHeld) {
-					this.cameraLocation.y -= 0.5 * delta;
-				}
-				if (downKeyHeld) {
 					this.cameraLocation.y += 0.5 * delta;
 				}
-				if (rightKeyHeld) {
-					this.cameraLocation.x += 0.5 * delta;
+				if (downKeyHeld) {
+					this.cameraLocation.y -= 0.5 * delta;
 				}
-				if (leftKeyHeld) {
+				if (rightKeyHeld) {
 					this.cameraLocation.x -= 0.5 * delta;
 				}
+				if (leftKeyHeld) {
+					this.cameraLocation.x += 0.5 * delta;
+				}
 			}
-			Vertex scaledDirection = Vertex.multiply(this.gaze, 0.5 * delta);
+			Vector4D scaledDirection = Vector4D.multiply(this.gaze, 0.5 * delta);
 			// Handle camera rotation
 			{
 				// Turn left
 				if (qKeyHeld) {
-					this.yaw += 0.05 * delta;
+					this.yaw -= 0.05 * delta;
 				}
 				// Turn right
 				if (dKeyHeld) {
-					this.yaw -= 0.05 * delta;
+					this.yaw += 0.05 * delta;
 				}
 				// Go forward
 				if (zKeyHeld) {
-					this.cameraLocation = Vertex.subtract(this.cameraLocation, scaledDirection);
+					this.cameraLocation = Vector4D.add(this.cameraLocation, scaledDirection);
 				}
 				// Go backwards
 				if (sKeyHeld) {
-					this.cameraLocation = Vertex.add(this.cameraLocation, scaledDirection);
+					this.cameraLocation = Vector4D.subtract(this.cameraLocation, scaledDirection);
 				}
 			}
 		}
 		// Update rotation angle (optional)
-		this.rotationAngle += 0.05 * delta;
+		{
+			// this.rotationAngle += 0.05 * delta;
+		}
 		// Update rotation matrices
 		{
 			// Update z rotation matrix
@@ -179,10 +181,10 @@ public final class Bresenham extends Game {
 		}
 		// Camera handling
 		{
-			this.target = new Vertex(0.0, 0.0, 1.0);
+			this.target = new Vector4D(0.0, 0.0, 1.0);
 			Matrix cameraRotationMatrix = this.createYRotationMatrix(this.yaw);
-			this.gaze = Vertex.applyMatrixToVector_MPW(this.target, cameraRotationMatrix);
-			this.target = Vertex.add(this.cameraLocation, this.gaze);
+			this.gaze = Vector4D.applyMatrixToVector_MPW(this.target, cameraRotationMatrix);
+			this.target = Vector4D.add(this.cameraLocation, this.gaze);
 			this.cameraMatrix = this.pointAt(this.cameraLocation, this.target, this.upAxis);
 			// Uses quick inverse - does real inverse work? Is it slower?
 			// this.viewMatrix = this.quickInverse(this.cameraMatrix);
@@ -199,9 +201,7 @@ public final class Bresenham extends Game {
 	public void render(Graphics graphics) {
 		// Clear the screen
 		graphics.setColor(Color.BLACK);
-		graphics.fillRect(Bresenham.ORIGIN_COORD_X, Bresenham.ORIGIN_COORD_X, Bresenham.WINDOW_WIDTH, Bresenham.WINDOW_HEIGHT);
-		// Set worse rendering hints (possibly optional?)
-		this.increaseRenderQuality(graphics);
+		graphics.fillRect(Bresenham.ORIGIN_COORD_X, Bresenham.ORIGIN_COORD_Y, Bresenham.WINDOW_WIDTH, Bresenham.WINDOW_HEIGHT);
 		// Triangles transform
 		Vector<Triangle> queueVector = new Vector<Triangle>();
 		{
@@ -212,49 +212,82 @@ public final class Bresenham extends Game {
 				// Transform localTriangle
 				localTriangle = Triangle.applyMatrixToTriangle_NW(localTriangle, this.worldMatrix);
 				// Calculate normal data
-				Vertex normalVertex = Vertex.normalToTriangle(localTriangle);
-				normalVertex = Vertex.normalize(normalVertex);
+				Vector4D normalVector = Vector4D.normalToTriangle(localTriangle);
+				normalVector = Vector4D.normalize(normalVector);
 				// Calculate camera ray
-				Vertex cameraRay = Vertex.subtract(localTriangle.vertices[0], this.cameraLocation);
+				Vector4D cameraRay = Vector4D.subtract(localTriangle.vectors[0], this.cameraLocation);
 				// Calculate dot product to evaluate if triangle is in view
-				double normalCameraDotProduct = Vertex.dotProduct(normalVertex, cameraRay);
+				double normalCameraDotProduct = Vector4D.dotProduct(normalVector, cameraRay);
 				if (normalCameraDotProduct < 0.0) {
 					// Set colour
-					float dotProduct = (float) Math.max(0.1f, Vertex.dotProduct(this.lightDirection, normalVertex));
+					float dotProduct = (float) Math.max(0.1f, Vector4D.dotProduct(this.lightDirection, normalVector));
 					localTriangle.color = new Color(dotProduct, dotProduct, dotProduct);
 					// Transform world space to view space
 					localTriangle = Triangle.applyMatrixToTriangle_NW(localTriangle, this.viewMatrix);
-					// Multiply by protection matrix 3D -> 2D
-					localTriangle = Triangle.applyMatrixToTriangle_NW(localTriangle, this.projectionMatrix);
-					// Normalise
-					localTriangle = Triangle.normalizeTriangle(localTriangle);
-					// Scale into view
-					Vertex viewOffset = new Vertex(1.0, 1.0, 0.0);
-					localTriangle = Triangle.addVertexToTriangle(localTriangle, viewOffset);
-					localTriangle = Triangle.scaleTriangleToView(localTriangle);
-					// Add to vector
-					queueVector.add(localTriangle);
+					// Clipping
+					Vector<Triangle> newTriangles = this.clipAgainstPlane(new Vector4D(0.0, 0.0, 0.001), new Vector4D(0.0, 0.0, 1.0), localTriangle);
+					for (Triangle clippedTriangle : newTriangles) {
+						// Multiply by protection matrix 3D -> 2D
+						localTriangle = Triangle.applyMatrixToTriangle_NW(clippedTriangle, this.projectionMatrix);
+						// Normalise
+						localTriangle = Triangle.normalizeTriangle(localTriangle);
+						// Flip XY
+						localTriangle = Triangle.flipXYCoordinates(localTriangle);
+						// Scale into view
+						Vector4D viewOffset = new Vector4D(1.0, 1.0, 0.0);
+						localTriangle = Triangle.addVectorToTriangle(localTriangle, viewOffset);
+						localTriangle = Triangle.scaleTriangleToView(localTriangle);
+						// Add to vector
+						queueVector.add(localTriangle);
+					}
 				}
 			}
 		}
-		// Sort all the vertices
+		// Sort all the vectors
 		Collections.sort(queueVector);
 		// Draw sorted triangles
 		{
 			for (Triangle orderedTriangle : queueVector) {
-				graphics.setColor(orderedTriangle.color);
-				// Own algorithm, neither fast nor really slow
-				/**
-				 * this.drawTriangle_LINE_BY_LINE(graphics, orderedTriangle.vectors[0].x,
-				 * orderedTriangle.vectors[0].y, // \n orderedTriangle.vectors[1].x,
-				 * orderedTriangle.vectors[1].y, // \n orderedTriangle.vectors[2].x,
-				 * orderedTriangle.vectors[2].y, // \n orderedTriangle.color);
-				 **/
-				// Graphics fill() implementation - slow down compared to wireframe
-				// rendering but to be expected
-				this.fillTriangle_GRAPHICS_IMPL(graphics, orderedTriangle);
-				// Graphics draw() implements - fastest draw method
-				// this.drawTriangle_GRAPHICS_IMPL(graphics, orderedTriangle);
+				Vector<Triangle> newTriangles = new Vector<Triangle>();
+				// Add initial triangle
+				newTriangles.add(orderedTriangle);
+				int newTrianglesCount = 1;
+				for (int plane = 0; plane < 4; plane += 1) {
+					while (newTrianglesCount > 0) {
+						// Take triangle from front of queue
+						Triangle currentElement = newTriangles.firstElement();
+						newTriangles.remove(0);
+						newTrianglesCount -= 1;
+						// Clip it against a plane. We only need to test each
+						// subsequent plane, against subsequent new triangles
+						// as all triangles after a plane clip are guaranteed
+						// to lie on the inside of the plane. I like how this
+						// comment is almost completely and utterly justified
+						switch (plane) {
+						case 0:
+							newTriangles.addAll(this.clipAgainstPlane(new Vector4D(0.0, 0.0, 0.0), new Vector4D(0.0, 1.0, 0.0), currentElement));
+							break;
+						case 1:
+							newTriangles.addAll(this.clipAgainstPlane(new Vector4D(0.0, Bresenham.WINDOW_HEIGHT - 1, 0.0), new Vector4D(0.0, -1.0, 0.0), currentElement));
+							break;
+						case 2:
+							newTriangles.addAll(this.clipAgainstPlane(new Vector4D(0.0, 0.0, 0.0), new Vector4D(1.0, 0.0, 0.0), currentElement));
+							break;
+						case 3:
+							newTriangles.addAll(this.clipAgainstPlane(new Vector4D(Bresenham.WINDOW_WIDTH - 1, 0.0, 0.0), new Vector4D(-1.0, 0.0, 0.0), currentElement));
+							break;
+						}
+						// Clipping may yield a variable number of triangles, so
+						// add these new ones to the back of the queue for subsequent
+						// clipping against next planes
+					}
+					newTrianglesCount = newTriangles.size();
+				}
+				// Draw the transformed, viewed, clipped, projected, sorted, clipped triangles
+				for (Triangle currentTriangle : newTriangles) {
+					graphics.setColor(currentTriangle.color);
+					this.fillTriangle(graphics, currentTriangle);
+				}
 			}
 		}
 	}
@@ -262,15 +295,15 @@ public final class Bresenham extends Game {
 	/**
 	 * Draws triangle - helper function
 	 */
-	public void drawTriangle_GRAPHICS_IMPL(Graphics graphics, Triangle triangle) {
-		this.drawTriangle_GRAPHICS_IMPL(graphics, triangle.vertices[0].x, triangle.vertices[0].y, triangle.vertices[1].x, triangle.vertices[1].y, triangle.vertices[2].x, triangle.vertices[2].y, triangle.color);
+	public void drawTriangle(Graphics graphics, Triangle triangle) {
+		this.drawTriangle(graphics, triangle.vectors[0].x, triangle.vectors[0].y, triangle.vectors[1].x, triangle.vectors[1].y, triangle.vectors[2].x, triangle.vectors[2].y, triangle.color);
 	}
 
 	/**
 	 * Draws triangle using the standard Java 2D graphics implementation - fastest
 	 * available
 	 */
-	public void drawTriangle_GRAPHICS_IMPL(Graphics graphics, double firstX, double firstY, double secondX, double secondY, double thirdX, double thirdY, Color color) {
+	public void drawTriangle(Graphics graphics, double firstX, double firstY, double secondX, double secondY, double thirdX, double thirdY, Color color) {
 		graphics.setColor(color);
 		graphics.drawPolygon(new int[] { (int) firstX, (int) secondX, (int) thirdX }, new int[] { (int) firstY, (int) secondY, (int) thirdY }, 3);
 	}
@@ -278,45 +311,82 @@ public final class Bresenham extends Game {
 	/**
 	 * Fills triangle - helper function
 	 */
-	public void fillTriangle_GRAPHICS_IMPL(Graphics graphics, Triangle triangle) {
-		this.fillTriangle_GRAPHICS_IMPL(graphics, triangle.vertices[0].x, triangle.vertices[0].y, triangle.vertices[1].x, triangle.vertices[1].y, triangle.vertices[2].x, triangle.vertices[2].y, triangle.color);
+	public void fillTriangle(Graphics graphics, Triangle triangle) {
+		this.fillTriangle(graphics, triangle.vectors[0].x, triangle.vectors[0].y, triangle.vectors[1].x, triangle.vectors[1].y, triangle.vectors[2].x, triangle.vectors[2].y, triangle.color);
 	}
 
 	/**
 	 * Fills triangle using the standard Java 2D graphics implementation - massive
 	 * slow down, to optimise
 	 */
-	public void fillTriangle_GRAPHICS_IMPL(Graphics graphics, double firstX, double firstY, double secondX, double secondY, double thirdX, double thirdY, Color color) {
+	public void fillTriangle(Graphics graphics, double firstX, double firstY, double secondX, double secondY, double thirdX, double thirdY, Color color) {
 		graphics.setColor(color);
 		graphics.fillPolygon(new int[] { (int) firstX, (int) secondX, (int) thirdX }, new int[] { (int) firstY, (int) secondY, (int) thirdY }, 3);
-	}
-
-	/**
-	 * Own algorithm for drawing triangles - slightly slower than system
-	 * implementation (why?) - No helper method because unused
-	 */
-	public void drawTriangle_LINE_BY_LINE(Graphics graphics, double firstX, double firstY, double secondX, double secondY, double thirdX, double thirdY, Color color) {
-		graphics.setColor(color);
-		graphics.drawLine((int) firstX, (int) firstY, (int) secondX, (int) secondY);
-		graphics.drawLine((int) secondX, (int) secondY, (int) thirdX, (int) thirdY);
-		graphics.drawLine((int) thirdY, (int) thirdX, (int) firstX, (int) firstY);
 	}
 
 	/**
 	 * Returns shortest distance from point to plane, plane normal must be
 	 * normalised
 	 */
-	public double distancePointToPlane(Vertex planePoint, Vertex planeNormal, Vertex target) {
-		target = Vertex.normalize(target);
-		return (((planeNormal.x * target.x) + (planeNormal.y * target.y) + (planeNormal.z * target.z)) - Vertex.dotProduct(planeNormal, planePoint));
+	public double distancePointToPlane(Vector4D planePoint, Vector4D planeNormal, Vector4D target) {
+		target = Vector4D.normalize(target);
+		return (((planeNormal.x * target.x) + (planeNormal.y * target.y) + (planeNormal.z * target.z)) - Vector4D.dotProduct(planeNormal, planePoint));
 	}
 
 	/**
-	 *
+	 * \// TODO
 	 */
-	public int clipAgainstPlane(Vertex planePoint, Vertex planeNormal, Triangle input, Triangle firstOutput, Triangle secondOutput) {
-		planeNormal = Vertex.normalize(planeNormal);
-		return -1;
+	public Vector<Triangle> clipAgainstPlane(Vector4D planePoint, Vector4D planeNormal, Triangle input) {
+		Vector<Triangle> newTriangles = new Vector<Triangle>();
+		planeNormal = Vector4D.normalize(planeNormal);
+		Vector4D[] pointsInside = new Vector4D[3], pointsOutside = new Vector4D[3];
+		int pointsInsideCount = 0, pointsOutsideCount = 0;
+		double firstDistance = this.distancePointToPlane(planePoint, planeNormal, input.vectors[0]);
+		double secondDistance = this.distancePointToPlane(planePoint, planeNormal, input.vectors[1]);
+		double thirdDistance = this.distancePointToPlane(planePoint, planeNormal, input.vectors[2]);
+		if (firstDistance >= 0) {
+			pointsInside[pointsInsideCount] = input.vectors[0];
+			pointsInsideCount += 1;
+		} else {
+			pointsOutside[pointsOutsideCount] = input.vectors[0];
+			pointsOutsideCount += 1;
+		}
+		if (secondDistance >= 0) {
+			pointsInside[pointsInsideCount] = input.vectors[1];
+			pointsInsideCount += 1;
+		} else {
+			pointsOutside[pointsOutsideCount] = input.vectors[1];
+			pointsOutsideCount += 1;
+		}
+		if (thirdDistance >= 0) {
+			pointsInside[pointsInsideCount] = input.vectors[2];
+			pointsInsideCount += 1;
+		} else {
+			pointsOutside[pointsOutsideCount] = input.vectors[2];
+			pointsOutsideCount += 1;
+		}
+		if (pointsInsideCount == 0) {
+			return newTriangles;
+		} else if (pointsInsideCount == 3) {
+			newTriangles.add(input);
+		}
+		if ((pointsInsideCount == 1) && (pointsOutsideCount == 2)) {
+			Vector4D firstPoint = pointsInside[0];
+			Vector4D secondPoint = Vector4D.vectorPlaneIntersection(planePoint, planeNormal, pointsInside[0], pointsOutside[0]);
+			Vector4D thirdPoint = Vector4D.vectorPlaneIntersection(planePoint, planeNormal, pointsInside[0], pointsOutside[1]);
+			newTriangles.add(new Triangle(firstPoint, secondPoint, thirdPoint, input.color));
+		}
+		if ((pointsInsideCount == 2) && (pointsOutsideCount == 1)) {
+			Vector4D firstTriangleFirstPoint = pointsInside[0];
+			Vector4D firstTriangleSecondPoint = pointsInside[1];
+			Vector4D firstTriangleThirdPoint = Vector4D.vectorPlaneIntersection(planePoint, planeNormal, pointsInside[0], pointsOutside[0]);
+			Vector4D secondTriangleFirstPoint = pointsInside[1];
+			Vector4D secondTriangleSecondPoint = firstTriangleThirdPoint;
+			Vector4D secondTriangleThirdPoint = Vector4D.vectorPlaneIntersection(planePoint, planeNormal, pointsInside[1], pointsOutside[0]);
+			newTriangles.add(new Triangle(firstTriangleFirstPoint, firstTriangleSecondPoint, firstTriangleThirdPoint, input.color));
+			newTriangles.add(new Triangle(secondTriangleFirstPoint, secondTriangleSecondPoint, secondTriangleThirdPoint, input.color));
+		}
+		return newTriangles;
 	}
 
 	/**
@@ -437,17 +507,17 @@ public final class Bresenham extends Game {
 	}
 
 	/**
-	 * Returns the "eye" matrix relative to the object position and an "up" vertex
+	 * Returns the "eye" matrix relative to the object position and an "up" vector
 	 */
-	public Matrix pointAt(Vertex position, Vertex target, Vertex reference) {
+	public Matrix pointAt(Vector4D position, Vector4D target, Vector4D reference) {
 		Matrix resultMatrix = new Matrix(4, 4);
 		// Calculate new forward direction relative to position
-		Vertex forwardP = Vertex.normalize(Vertex.subtract(target, position));
+		Vector4D forwardP = Vector4D.normalize(Vector4D.subtract(target, position));
 		// Calculate new up direction relative to new forward
-		Vertex scaleF = Vertex.multiply(forwardP, Vertex.dotProduct(reference, forwardP));
-		Vertex upP = Vertex.normalize(Vertex.subtract(reference, scaleF));
+		Vector4D scaleF = Vector4D.multiply(forwardP, Vector4D.dotProduct(reference, forwardP));
+		Vector4D upP = Vector4D.normalize(Vector4D.subtract(reference, scaleF));
 		// Calculate new right as cross product of forward & up
-		Vertex rightP = Vertex.crossProduct(upP, forwardP);
+		Vector4D rightP = Vector4D.crossProduct(upP, forwardP);
 		// Construct "point-at" matrix
 		{
 			// First row
