@@ -116,7 +116,7 @@ public class Vector4D {
 	 */
 	public static Vector4D applyMatrixToVector_MPW(Vector4D vector, Matrix matrix) {
 		Matrix vectorMatrix = Matrix.convertVectorToMatrix(vector);
-		Matrix productMatrix = Matrix.multiply(vectorMatrix, matrix);
+		Matrix productMatrix = Matrix.product(vectorMatrix, matrix);
 		return Vector4D.convertMatrixToVector4D(productMatrix);
 	}
 

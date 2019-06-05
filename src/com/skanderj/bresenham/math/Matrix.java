@@ -2,6 +2,8 @@ package com.skanderj.bresenham.math;
 
 import java.util.Random;
 
+import com.skanderj.bresenham.Triangle;
+
 public final class Matrix {
 	private final int rows, lines;
 	public final double[][] data;
@@ -244,6 +246,29 @@ public final class Matrix {
 			}
 		}
 		return inverse;
+	}
+
+	/**
+	 * Converts a vertex to a 1-by-4 matrix
+	 */
+	public static Matrix convertVectorToMatrix(Vector4D vector) {
+		Matrix vectMat = new Matrix(1, 4);
+		vectMat.data[0][0] = vector.x;
+		vectMat.data[0][1] = vector.y;
+		vectMat.data[0][2] = vector.z;
+		vectMat.data[0][3] = vector.w;
+		return vectMat;
+	}
+
+	/**
+	 * Converts a triangle to a 3-by-4 matrix
+	 */
+	public static Matrix convertTriangleToMatrix(Triangle triangle) {
+		Matrix triangleMat = new Matrix(3, 4);
+		for (int index = 0; index < Triangle.SIDES; index += 1) {
+			triangleMat.data[index] = Matrix.convertVectorToMatrix(triangle.vectors[index]).data[0];
+		}
+		return triangleMat;
 	}
 
 	public final void print() {

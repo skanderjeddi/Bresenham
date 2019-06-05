@@ -12,9 +12,9 @@ import java.util.Vector;
 import com.skanderj.bresenham.math.Matrix;
 import com.skanderj.bresenham.math.Vector4D;
 import com.skanderj.gingerbread.SimpleThread;
-import com.skanderj.gingerbread.core.Process;
+import com.skanderj.gingerbread.core.Game;
 
-public final class Bresenham extends SimpleThread {
+public final class Bresenham extends Game {
 	// Singleton model
 	private static Bresenham instance;
 
@@ -175,9 +175,9 @@ public final class Bresenham extends SimpleThread {
 		// Create transformation matrix
 		{
 			// Z * X rotation product
-			this.worldMatrix = Matrix.multiply(this.zRotationMatrix, this.xRotationMatrix);
+			this.worldMatrix = Matrix.product(this.zRotationMatrix, this.xRotationMatrix);
 			// Translation
-			this.worldMatrix = Matrix.multiply(this.worldMatrix, this.translationMatrix);
+			this.worldMatrix = Matrix.product(this.worldMatrix, this.translationMatrix);
 		}
 		// Camera handling
 		{

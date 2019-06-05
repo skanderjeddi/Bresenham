@@ -47,7 +47,7 @@ public class Triangle implements Comparable<Triangle> {
 	 */
 	public static Triangle applyMatrixToTriangle_NW(Triangle triangle, Matrix matrix) {
 		Matrix triangleMatrix = Matrix.convertTriangleToMatrix(triangle);
-		Matrix resultMatrix = Matrix.multiply(triangleMatrix, matrix);
+		Matrix resultMatrix = Matrix.product(triangleMatrix, matrix);
 		return Triangle.convertMatrixToTriangle(resultMatrix, triangle.color);
 	}
 
