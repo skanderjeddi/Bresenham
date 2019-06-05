@@ -3,8 +3,6 @@ package com.skanderj.bresenham.math;
 import java.util.Random;
 
 import com.skanderj.bresenham.Triangle;
-import com.skanderj.bresenham.time.Watch;
-import com.skanderj.bresenham.time.Watch.WatchMode;
 
 public final class Matrix {
 	private final int rows, lines;
@@ -261,16 +259,5 @@ public final class Matrix {
 				target[row][line] = source[row][line];
 			}
 		}
-	}
-	
-	public static void main(String[] args) {
-		Matrix matrix = Matrix.random(12, 12, 10);
-		matrix.print("Random matrix", false);
-		Watch watch = new Watch(WatchMode.MILLIS);
-		watch.begin();
-		Matrix inverse = Matrix.inverse(matrix);
-		watch.end();
-		System.out.println("Took " + watch.getElapsedTime() + "ms.");
-		inverse.print("Inverse", false);
 	}
 }
