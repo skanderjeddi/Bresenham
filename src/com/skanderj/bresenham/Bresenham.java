@@ -14,7 +14,7 @@ import com.skanderj.bresenham.math.Vector4D;
 import com.skanderj.gingerbread.SimpleThread;
 import com.skanderj.gingerbread.core.Process;
 
-public final class Bresenham extends Process {
+public final class Bresenham extends SimpleThread {
 	// Singleton model
 	private static Bresenham instance;
 

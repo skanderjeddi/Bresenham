@@ -2,18 +2,10 @@ package com.skanderj.bresenham.math;
 
 import java.util.Random;
 
-import com.skanderj.bresenham.Triangle;
-
 public final class Matrix {
 	private final int rows, lines;
 	public final double[][] data;
 
-	/**
-	 * Generates the n-by-n identity matrix
-	 *
-	 * @param size
-	 * @return [I(n)]
-	 */
 	public static final Matrix identity(int size) {
 		Matrix identityMatrix = new Matrix(size, size);
 		for (int cursor = 0; cursor < size; cursor += 1) {
@@ -22,14 +14,6 @@ public final class Matrix {
 		return identityMatrix;
 	}
 
-	/**
-	 * Generates a random matrix
-	 *
-	 * @param rows
-	 * @param lines
-	 * @param magnitude
-	 * @return a random matrix filled with positives floating point numbers
-	 */
 	public static final Matrix random(int rows, int lines, int magnitude) {
 		Random random = new Random();
 		Matrix randomMatrix = new Matrix(rows, lines);
@@ -39,6 +23,84 @@ public final class Matrix {
 			}
 		}
 		return randomMatrix;
+	}
+
+	public static final boolean isSquare(Matrix matrix) {
+		return matrix.rows == matrix.lines;
+	}
+
+	public static final boolean isDiagonal(Matrix matrix) {
+		boolean square = Matrix.isSquare(matrix);
+		if (square) {
+			for (int row = 0; row < matrix.rows; row += 1) {
+				for (int line = 0; line < matrix.lines; line += 1) {
+					if (row == line) {
+						continue;
+					} else {
+						if (matrix.data[row][line] == 0) {
+							continue;
+						} else {
+							return false;
+						}
+					}
+				}
+			}
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public static final boolean isLowerTriangular(Matrix matrix) {
+		boolean square = Matrix.isSquare(matrix);
+		if (square) {
+			for (int row = 0; row < matrix.rows; row += 1) {
+				for (int line = 0; line < matrix.lines; line += 1) {
+					if (row == line) {
+						continue;
+					} else {
+						if (row > line) {
+							if (matrix.data[row][line] == 0) {
+								continue;
+							} else {
+								return false;
+							}
+						} else {
+							continue;
+						}
+					}
+				}
+			}
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public static final boolean isUpperTriangular(Matrix matrix) {
+		boolean square = Matrix.isSquare(matrix);
+		if (square) {
+			for (int row = 0; row < matrix.rows; row += 1) {
+				for (int line = 0; line < matrix.lines; line += 1) {
+					if (row == line) {
+						continue;
+					} else {
+						if (row < line) {
+							if (matrix.data[row][line] == 0) {
+								continue;
+							} else {
+								return false;
+							}
+						} else {
+							continue;
+						}
+					}
+				}
+			}
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	public Matrix(int rows, int lines) {
@@ -61,12 +123,6 @@ public final class Matrix {
 		this(copyMatrix.data);
 	}
 
-	/**
-	 * Multiplies the matrix values by the scalar value
-	 *
-	 * @param scalar
-	 * @return k * [M]
-	 */
 	public static final Matrix scale(Matrix matrix, double k) {
 		Matrix resultMatrix = new Matrix(matrix);
 		for (int row = 0; row < matrix.rows; row += 1) {
@@ -77,13 +133,7 @@ public final class Matrix {
 		return resultMatrix;
 	}
 
-	/**
-	 * Sums current matrix with argument matrix
-	 *
-	 * @param mat
-	 * @return [A] + [B]
-	 */
-	public static final Matrix add(Matrix firstMat, Matrix secondMatrix) {
+	public static final Matrix sum(Matrix firstMat, Matrix secondMatrix) {
 		Matrix resultMatrix = new Matrix(firstMat);
 		for (int row = 0; row < firstMat.rows; row += 1) {
 			for (int line = 0; line < firstMat.lines; line += 1) {
@@ -93,13 +143,7 @@ public final class Matrix {
 		return resultMatrix;
 	}
 
-	/**
-	 * Subtracts argument matrix from current matrix
-	 *
-	 * @param mat
-	 * @return [A] - [B]
-	 */
-	public static final Matrix subtract(Matrix firstMat, Matrix secondMatrix) {
+	public static final Matrix difference(Matrix firstMat, Matrix secondMatrix) {
 		Matrix resultMatrix = new Matrix(firstMat);
 		for (int row = 0; row < firstMat.rows; row += 1) {
 			for (int line = 0; line < firstMat.lines; line += 1) {
@@ -109,14 +153,7 @@ public final class Matrix {
 		return resultMatrix;
 	}
 
-	/**
-	 * Mutliplies compatible matrices together
-	 *
-	 * @param firstMatrix
-	 * @param secondMatrix
-	 * @return [A] * [B]
-	 */
-	public static final Matrix multiply(Matrix firstMatrix, Matrix secondMatrix) {
+	public static final Matrix product(Matrix firstMatrix, Matrix secondMatrix) {
 		Matrix resultMatrix;
 		if (firstMatrix.lines == secondMatrix.rows) {
 			resultMatrix = new Matrix(firstMatrix.rows, secondMatrix.lines);
@@ -142,11 +179,6 @@ public final class Matrix {
 		return resultMatrix;
 	}
 
-	/**
-	 * Generates the transpose of the current matrix
-	 *
-	 * @return t[A]
-	 */
 	public static final Matrix transpose(Matrix matrix) {
 		Matrix resultMatrix = new Matrix(matrix.lines, matrix.rows);
 		for (int row = 0; row < matrix.rows; row += 1) {
@@ -157,12 +189,9 @@ public final class Matrix {
 		return resultMatrix;
 	}
 
-	/**
-	 * @return the determinant of a matrix
-	 */
 	public static final double determinant(Matrix matrix) {
 		if (matrix.rows != matrix.lines) {
-			throw new IllegalStateException("invalid dimensions");
+			throw new IllegalStateException("Invalid dimensions");
 		}
 		if (matrix.rows == 2) {
 			return (matrix.data[0][0] * matrix.data[1][1]) - (matrix.data[0][1] * matrix.data[1][0]);
@@ -174,9 +203,19 @@ public final class Matrix {
 		return determinant;
 	}
 
-	/**
-	 * @return the minor of a given matrix
-	 */
+	public static final double diagonalProduct(Matrix matrix) {
+		boolean square = Matrix.isSquare(matrix);
+		if (square) {
+			double diagonalProduct = 1.0;
+			for (int slot = 0; slot < matrix.lines; slot += 1) {
+				diagonalProduct *= matrix.data[slot][slot];
+			}
+			return diagonalProduct;
+		} else {
+			throw new IllegalStateException("Invalid dimensions");
+		}
+	}
+
 	public static final Matrix minor(Matrix matrix, int targetRow, int targetColumn) {
 		Matrix minor = new Matrix(matrix.rows - 1, matrix.lines - 1);
 		for (int row = 0; row < matrix.rows; row += 1) {
@@ -189,9 +228,6 @@ public final class Matrix {
 		return minor;
 	}
 
-	/**
-	 * @return the inverse of a given matrix
-	 */
 	public static final Matrix inverse(Matrix matrix) {
 		Matrix inverse = new Matrix(matrix.rows, matrix.lines);
 		for (int row = 0; row < matrix.rows; row += 1) {
@@ -210,31 +246,7 @@ public final class Matrix {
 		return inverse;
 	}
 
-	/**
-	 * Converts a vector to a 1-by-4 matrix
-	 */
-	public static Matrix convertVectorToMatrix(Vector4D vector) {
-		Matrix vectorMatrix = new Matrix(1, 4);
-		vectorMatrix.data[0][0] = vector.x;
-		vectorMatrix.data[0][1] = vector.y;
-		vectorMatrix.data[0][2] = vector.z;
-		vectorMatrix.data[0][3] = vector.w;
-		return vectorMatrix;
-	}
-
-	/**
-	 * Converts a triangle to a 3-by-4 matrix
-	 */
-	public static Matrix convertTriangleToMatrix(Triangle triangle) {
-		Matrix triangleMatrix = new Matrix(3, 4);
-		for (int index = 0; index < Triangle.SIDES; index += 1) {
-			triangleMatrix.data[index] = Matrix.convertVectorToMatrix(triangle.vectors[index]).data[0];
-		}
-		return triangleMatrix;
-	}
-
-	public final void print(String title, boolean newLine) {
-		System.out.printf("Printing matrix: %s\n", title);
+	public final void print() {
 		for (int row = 0; row < this.rows; row += 1) {
 			for (int line = 0; line < this.lines; line += 1) {
 				if (line == 0) {
@@ -247,9 +259,6 @@ public final class Matrix {
 					System.out.print("\t");
 				}
 			}
-		}
-		if (newLine) {
-			System.out.println();
 		}
 	}
 
